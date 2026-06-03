@@ -1,6 +1,6 @@
 {
   "name": "tanstack-router-cache",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Route view caching for TanStack Router.",
   "type": "module",
   "license": "MIT",
@@ -46,8 +46,8 @@
     "build": "bun run clean && rolldown -c && tsc",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
-    "lint": "biome check .",
-    "lint:fix": "biome check . --write",
+    "lint": "biome lint src rolldown.config.ts --skip=lint/performance/noBarrelFile --skip=lint/style/useConsistentTypeDefinitions --skip=lint/suspicious/noConsole",
+    "lint:fix": "biome lint src rolldown.config.ts --write --skip=lint/performance/noBarrelFile --skip=lint/style/useConsistentTypeDefinitions --skip=lint/suspicious/noConsole",
     "pack:dry-run": "bun pm pack --dry-run",
     "prepack": "bun run build",
     "prepublishOnly": "bun run lint && bun run typecheck"

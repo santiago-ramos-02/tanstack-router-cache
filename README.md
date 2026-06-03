@@ -2,21 +2,21 @@
 
 Route view caching for [`@tanstack/react-router`](https://tanstack.com/router).
 
-`tanstack-router-cache` keeps selected route trees mounted while they are hidden, then restores them when the user navigates back. Use it for tab-like workflows, long forms, filtered lists, scroll positions, and page state that should survive route changes without moving everything into global state.
+Keep selected route trees mounted while they are hidden, then restore them when the user navigates back.
 
 ## Install
-
-```sh
-bun add tanstack-router-cache
-```
 
 ```sh
 npm install tanstack-router-cache
 ```
 
-## Consumer requirements
+```sh
+bun add tanstack-router-cache
+```
 
-Your app should already use React and TanStack Router. This package keeps them as peer dependencies so it does not install a second router or React runtime.
+## Requirements
+
+Your app should already install these packages:
 
 | Package | Supported versions |
 | --- | --- |
@@ -24,27 +24,23 @@ Your app should already use React and TanStack Router. This package keeps them a
 | `react-dom` | Match your React version. |
 | `@tanstack/react-router` | `>=1.168.14 <2.0.0` |
 
-## Maintenance
-
-This package is intended to stay compatible with current TanStack Router 1.x releases. The peer dependency floor is tested against the oldest version supported by the current implementation, while development tracks the latest compatible TanStack Router version.
-
 ## Usage
 
-Wrap the route tree that should support retention:
+Wrap your route outlet once:
 
 ```tsx
 import { RouterCacheOutlet, RouterCacheProvider } from "tanstack-router-cache";
 
 export function RootRoute() {
   return (
-    <RouterCacheProvider maxEntries={8} maxEntriesPerRouteId={2}>
+    <RouterCacheProvider>
       <RouterCacheOutlet />
     </RouterCacheProvider>
   );
 }
 ```
 
-Enable caching on a route:
+Enable caching on any route that should stay mounted:
 
 ```tsx
 export const Route = createFileRoute("/customers")({
@@ -55,29 +51,16 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-Run work only while a retained route is visible:
+For the full API, see [docs](./docs).
 
-```tsx
-import { useRouteCacheEffect } from "tanstack-router-cache";
+## Examples
 
-function CustomersPage() {
-  useRouteCacheEffect(() => {
-    const controller = new AbortController();
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
-  return <CustomersTable />;
-}
-```
-
-More usage details are in [docs/usage.md](./docs/usage.md).
+- [Basic](https://github.com/santiago-ramos-02/tanstack-router-cache/tree/main/examples/basic): the smallest useful setup. Start here; most apps only need this pattern.
+- [Power-user demo](https://github.com/santiago-ramos-02/tanstack-router-cache/tree/main/examples/power-user-demo): a larger demo with retained forms, filtered lists, cache controls, route lifecycle state, and window scroll restoration. Use it when you need to inspect edge cases.
 
 ## Acknowledgements
 
-This project originated from [`hemengke1997/tanstack-router-keepalive`](https://github.com/hemengke1997/tanstack-router-keepalive). The implementation has since diverged substantially, including current TanStack Router compatibility, cache limits, error handling, navigation lifecycle instrumentation, dependency updates, and memory-focused eviction.
+This project originated from [`hemengke1997/tanstack-router-keepalive`](https://github.com/hemengke1997/tanstack-router-keepalive), then diverged with current TanStack Router compatibility, a different API, cache limits, error handling, navigation lifecycle tools, dependency updates, and memory-focused eviction.
 
 ## License
 

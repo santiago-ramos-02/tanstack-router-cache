@@ -105,9 +105,10 @@ export function useRouterCacheDebug(
 ) {
   const warningThresholdRef = useRef<number | null>(null);
   const lastWarnedCountRef = useRef<number | null>(null);
-  const lastSnapshotRef = useRef<RouterCacheDebugSnapshot>(
-    buildSnapshot(cachedRoutes, visiblePathname)
-  );
+  const lastSnapshotRef = useRef<RouterCacheDebugSnapshot | null>(null);
+  if (lastSnapshotRef.current === null) {
+    lastSnapshotRef.current = buildSnapshot(cachedRoutes, visiblePathname);
+  }
 
   const snapshot = useMemo(
     () => buildSnapshot(cachedRoutes, visiblePathname),
@@ -130,7 +131,7 @@ export function useRouterCacheDebug(
     };
 
     const api: RouterCacheDebugApi = {
-      getSnapshot: () => lastSnapshotRef.current,
+      getSnapshot: () => lastSnapshotRef.current ?? snapshot,
       lastSnapshot: snapshot,
       refresh,
       setWarningThreshold: (nextThreshold) => {

@@ -1,4 +1,4 @@
-import type { StaticDataRouteOption } from "@tanstack/react-router";
+import type { ParsedLocation, StaticDataRouteOption } from "@tanstack/react-router";
 import {
   Outlet,
   useChildMatches,
@@ -18,11 +18,7 @@ import OffScreen from "./off-screen";
 import { shouldRestoreCachedHref } from "./restore-cached-href";
 
 type RouterSnapshot = ComponentProps<typeof CachedOutlet>["routerSnapshot"];
-type RouterLocation = Record<string, unknown> & {
-  href?: string;
-  pathname: string;
-  search?: Record<string, unknown>;
-};
+type RouterLocation = ParsedLocation;
 type RouterMatch = ReturnType<typeof useMatches>[number] & {
   _nonReactive?: Record<string, unknown>;
   id: string;
@@ -63,12 +59,6 @@ const LIVE_ROUTER_METHODS = [
   "preloadRoute",
 ] as const;
 
-type RouterLocationLike = {
-  href?: string;
-  pathname: string;
-  search?: unknown;
-};
-
 function createStaticStore<T>(value: T) {
   return {
     get: () => value,
@@ -99,16 +89,8 @@ function getLiveRouterMethodDescriptors(router: ReturnType<typeof useRouter>) {
   );
 }
 
-function isRouterSearch(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function toRouterLocation(location: RouterLocationLike): RouterLocation {
-  return {
-    href: location.href,
-    pathname: location.pathname,
-    search: isRouterSearch(location.search) ? location.search : undefined,
-  };
+function toRouterLocation(location: RouterLocation): RouterLocation {
+  return { ...location };
 }
 
 function isReadyCachedRoute(route: ReadyCachedRoute | undefined) {
@@ -584,9 +566,12 @@ function RouteCacheManager() {
   );
   const previousPathnameRef = useRef<string | undefined>(undefined);
   const previousHrefRef = useRef<string | undefined>(undefined);
-  const previousRouteCacheModesRef = useRef<Map<string, ActivityMode>>(
-    new Map()
+  const previousRouteCacheModesRef = useRef<Map<string, ActivityMode> | null>(
+    null
   );
+  if (previousRouteCacheModesRef.current === null) {
+    previousRouteCacheModesRef.current = new Map();
+  }
   const previousVisiblePathnameRef = useRef<string | undefined>(undefined);
 
   const routerLocation = useRouterState({
@@ -730,6 +715,10 @@ function RouteCacheManager() {
   }, [destinationRoute, eventListener, routerPathname, visiblePathname]);
 
   useLayoutEffect(() => {
+    if (previousRouteCacheModesRef.current === null) {
+      previousRouteCacheModesRef.current = new Map();
+    }
+
     previousRouteCacheModesRef.current = syncCachedRouteActivityEvents({
       cachedRoutes,
       eventListener,

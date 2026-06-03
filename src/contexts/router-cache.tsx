@@ -363,15 +363,16 @@ function RouterCacheProviderScope({
     maxEntries: normalizeLimit(maxEntries),
     maxEntriesPerRouteId: normalizeLimit(maxEntriesPerRouteId),
   });
-  const initialCachedRoutes = useRef(
-    applyCachedRouteLimits(
+  const initialCachedRoutesRef = useRef<CachedRoutes | null>(null);
+  if (initialCachedRoutesRef.current === null) {
+    initialCachedRoutesRef.current = applyCachedRouteLimits(
       filterRouterCacheRoutes(defaultCachedRoutes),
       cacheConfigRef.current,
       new Set()
-    )
-  );
+    );
+  }
   const [cachedRoutes, setCachedRoutes] = useState<CachedRoutes>(
-    () => initialCachedRoutes.current
+    () => initialCachedRoutesRef.current ?? EMPTY_CACHED_ROUTES
   );
   const [erroredRouteCounts, setErroredRouteCounts] = useState<
     Record<string, number>
