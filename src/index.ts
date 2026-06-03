@@ -7,7 +7,7 @@ export { useRouteCacheEffect } from "./hooks/use-route-cache-effect";
 export { useRouteCacheErrorBoundary } from "./hooks/use-route-cache-error-boundary";
 export { useRouteCacheNavigation } from "./hooks/use-route-cache-navigation";
 export { useRouterCache } from "./hooks/use-router-cache";
-export * from "./types";
+export type * from "./types";
 
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {

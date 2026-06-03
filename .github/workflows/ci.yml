@@ -43,4 +43,4 @@ jobs:
         run: bun run build
 
       - name: Verify npm package contents
-        run: npm publish --dry-run --access public
+        run: npm pack --dry-run
