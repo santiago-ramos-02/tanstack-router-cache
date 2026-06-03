@@ -55,8 +55,7 @@ For the full API, see [docs](./docs).
 
 ## Examples
 
-- [Basic](https://github.com/santiago-ramos-02/tanstack-router-cache/tree/main/examples/basic): the smallest useful setup. Start here; most apps only need this pattern.
-- [Power-user demo](https://github.com/santiago-ramos-02/tanstack-router-cache/tree/main/examples/power-user-demo): a larger demo with retained forms, filtered lists, cache controls, route lifecycle state, and window scroll restoration. Use it when you need to inspect edge cases.
+- [Demo app](https://github.com/santiago-ramos-02/tanstack-router-cache/tree/main/examples/demo): one Vite app with a basic flow for most users and a power-user flow for edge cases.
 
 ## Acknowledgements
 

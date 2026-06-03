@@ -1,7 +1,8 @@
 # Examples
 
-Start with [basic](./basic). It shows the normal setup most apps need.
+Use [demo](./demo). It is a deployable Vite app with both flows:
 
-Use [power-user-demo](./power-user-demo) when you want to inspect a heavier app with retained forms, filtered lists, manual cache controls, lifecycle state, and window scroll restoration.
+- Basic: the normal setup most apps need.
+- Power user: retained forms, filtered lists, manual cache controls, lifecycle state, and window scroll restoration.
 
-Both examples use public npm packages only.
+The demo uses public npm packages only.

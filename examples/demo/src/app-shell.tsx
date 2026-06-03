@@ -13,13 +13,17 @@ export function AppShell() {
           </div>
           <nav aria-label="Demo routes" className="nav-list">
             <NavigationLink label="Overview" to="/" />
-            <NavigationLink label="Draft workspace" to="/draft" />
-            <NavigationLink label="Catalog" to="/catalog" />
-            <NavigationLink label="Normal route" to="/regular" />
+            <NavigationLink label="Basic setup" to="/basic" />
+            <NavigationLink label="Saved form" to="/basic/saved-form" />
+            <NavigationLink label="Regular form" to="/basic/regular-form" />
+            <NavigationLink label="Power demo" to="/power" />
+            <NavigationLink label="Draft workspace" to="/power/draft" />
+            <NavigationLink label="Catalog" to="/power/catalog" />
+            <NavigationLink label="Normal route" to="/power/regular" />
           </nav>
           <div className="sidebar-note">
-            Draft and catalog stay mounted when hidden. The normal route resets
-            after navigation.
+            The basic flow is what most apps need. The power flow shows heavier
+            retained-route behavior for edge cases.
           </div>
         </aside>
         <main className="route-surface">

@@ -127,10 +127,10 @@ export function CatalogWorkspace() {
         <p className="eyebrow">Scroll checkpoint</p>
         <h3>Return here after visiting another route.</h3>
         <div className="button-row">
-          <Link className="primary-button" to="/draft">
+          <Link className="primary-button" to="/power/draft">
             Open draft
           </Link>
-          <Link className="secondary-button" to="/regular">
+          <Link className="secondary-button" to="/power/regular">
             Open normal route
           </Link>
         </div>

@@ -1,6 +1,14 @@
 import { Link } from "@tanstack/react-router";
 
-type DemoRoute = "/" | "/draft" | "/catalog" | "/regular";
+type DemoRoute =
+  | "/"
+  | "/basic"
+  | "/basic/saved-form"
+  | "/basic/regular-form"
+  | "/power"
+  | "/power/draft"
+  | "/power/catalog"
+  | "/power/regular";
 
 export function NavigationLink({
   label,
@@ -8,6 +16,7 @@ export function NavigationLink({
 }: Readonly<{ label: string; to: DemoRoute }>) {
   return (
     <Link
+      activeOptions={{ exact: true }}
       activeProps={{ "data-active": "true" }}
       className="nav-link"
       preload="intent"

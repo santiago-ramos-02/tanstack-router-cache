@@ -1,22 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { ValueCard } from "../components/value-card";
 
-export function HomePage() {
+export function PowerOverviewPage() {
   return (
     <section className="page-stack">
       <div className="hero-panel">
         <div className="hero-copy">
-          <p className="eyebrow">Interactive demo</p>
+          <p className="eyebrow">Power-user flow</p>
           <h2>Keep route views warm without moving page state globally.</h2>
           <p>
             Work in a draft, tune catalog filters, jump away, then return to the
             exact page you left.
           </p>
           <div className="button-row">
-            <Link className="primary-button" to="/draft">
+            <Link className="primary-button" to="/power/draft">
               Open draft
             </Link>
-            <Link className="secondary-button" to="/regular">
+            <Link className="secondary-button" to="/power/regular">
               Compare reset
             </Link>
           </div>
@@ -43,17 +43,17 @@ export function HomePage() {
         <ValueCard
           heading="Long forms"
           text="Draft text, choices, and timers remain in place after route changes."
-          to="/draft"
+          to="/power/draft"
         />
         <ValueCard
           heading="Filtered lists"
           text="Search terms, selected rows, and scroll position survive navigation."
-          to="/catalog"
+          to="/power/catalog"
         />
         <ValueCard
           heading="Control route"
           text="A regular route shows the default reset behavior side by side."
-          to="/regular"
+          to="/power/regular"
         />
       </div>
     </section>

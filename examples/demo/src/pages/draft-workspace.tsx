@@ -164,10 +164,10 @@ export function DraftWorkspace() {
             ))}
           </div>
           <div className="button-row">
-            <Link className="primary-button" to="/catalog">
+            <Link className="primary-button" to="/power/catalog">
               Open catalog
             </Link>
-            <Link className="secondary-button" to="/regular">
+            <Link className="secondary-button" to="/power/regular">
               Open normal route
             </Link>
           </div>

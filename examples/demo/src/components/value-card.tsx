@@ -7,7 +7,14 @@ export function ValueCard({
 }: Readonly<{
   heading: string;
   text: string;
-  to: "/draft" | "/catalog" | "/regular";
+  to:
+    | "/basic"
+    | "/basic/saved-form"
+    | "/basic/regular-form"
+    | "/power"
+    | "/power/draft"
+    | "/power/catalog"
+    | "/power/regular";
 }>) {
   return (
     <Link className="value-card" to={to}>

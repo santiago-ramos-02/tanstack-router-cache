@@ -396,6 +396,17 @@ textarea {
   color: #24211d;
 }
 
+.code-panel {
+  overflow: auto;
+  margin: 0;
+  border: 1px solid rgba(34, 32, 27, 0.14);
+  border-radius: 8px;
+  padding: 16px;
+  background: #20242a;
+  color: #f8fbfa;
+  font: 0.95rem/1.5 "Cascadia Code", Consolas, monospace;
+}
+
 textarea {
   resize: vertical;
 }

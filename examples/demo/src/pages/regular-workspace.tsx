@@ -58,10 +58,10 @@ export function RegularWorkspace() {
           />
         </label>
         <div className="button-row">
-          <Link className="primary-button" to="/draft">
+          <Link className="primary-button" to="/power/draft">
             Open retained draft
           </Link>
-          <Link className="secondary-button" to="/catalog">
+          <Link className="secondary-button" to="/power/catalog">
             Open retained catalog
           </Link>
         </div>
