@@ -1,4 +1,8 @@
-import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router";
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
 import { AppShell } from "./app-shell";
 import { BasicOverviewPage } from "./pages/basic-overview-page";
 import { BasicRegularFormPage } from "./pages/basic-regular-form-page";

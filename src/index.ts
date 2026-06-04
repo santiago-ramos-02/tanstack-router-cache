@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noBarrelFile: this file is the package's public entry point.
 export { RouterCacheOutlet } from "./components/router-cache-outlet";
 export type { CachedRouteData, CachedRoutes } from "./contexts/router-cache";
 export { RouterCacheProvider } from "./contexts/router-cache";
@@ -10,6 +11,7 @@ export { useRouterCache } from "./hooks/use-router-cache";
 export type * from "./types";
 
 declare module "@tanstack/react-router" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: TanStack Router static data is extended through interface merging.
   interface StaticDataRouteOption {
     routeCache?: boolean;
   }

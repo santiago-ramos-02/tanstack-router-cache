@@ -1,4 +1,7 @@
-import type { ParsedLocation, StaticDataRouteOption } from "@tanstack/react-router";
+import type {
+  ParsedLocation,
+  StaticDataRouteOption,
+} from "@tanstack/react-router";
 import {
   Outlet,
   useChildMatches,

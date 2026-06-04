@@ -1,7 +1,4 @@
-import {
-  useRouteCacheNavigation,
-  useRouterCache,
-} from "tanstack-router-cache";
+import { useRouteCacheNavigation, useRouterCache } from "tanstack-router-cache";
 import { StatusMetric } from "./status-metric";
 
 export function CachePanel() {

@@ -103,7 +103,9 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
 
     const savedPosition = windowScrollPositions.get(pathname);
     let userRequestedScroll = false;
-    let scrollTrackingIntervalId: number | undefined;
+    let scrollTrackingIntervalId:
+      | ReturnType<typeof globalThis.setInterval>
+      | undefined;
     const startScrollTracking = () => {
       scrollTrackingIntervalId ??= globalThis.setInterval(
         saveScrollPosition,
@@ -161,7 +163,7 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
       startScrollTracking();
     };
 
-    const timeoutIds: number[] = [];
+    const timeoutIds: ReturnType<typeof globalThis.setTimeout>[] = [];
     let rafId = globalThis.requestAnimationFrame(() => {
       rafId = globalThis.requestAnimationFrame(() => {
         restoreScrollPosition();

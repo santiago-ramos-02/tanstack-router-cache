@@ -55,14 +55,18 @@ function pushRelease() {
   const tagName = `v${packageJson.version}`;
 
   if (!tagExists(tagName)) {
-    fail(`${tagName} does not exist locally. Run "bun run release:prepare patch" first.`);
+    fail(
+      `${tagName} does not exist locally. Run "bun run release:prepare patch" first.`
+    );
   }
 
   const headCommit = read("git", ["rev-parse", "HEAD"]);
   const tagCommit = read("git", ["rev-list", "-n", "1", tagName]);
 
   if (headCommit !== tagCommit) {
-    fail(`${tagName} does not point at HEAD. Check out the release commit before pushing.`);
+    fail(
+      `${tagName} does not point at HEAD. Check out the release commit before pushing.`
+    );
   }
 
   run("git", ["push", "origin", "main"]);
@@ -106,7 +110,9 @@ function resolveNextVersion(currentVersion, versionSpec) {
   const next = parseVersion(versionSpec);
 
   if (compareVersions(next, current) <= 0) {
-    fail(`${versionSpec} must be greater than the current version ${currentVersion}.`);
+    fail(
+      `${versionSpec} must be greater than the current version ${currentVersion}.`
+    );
   }
 
   return versionSpec;
@@ -140,7 +146,9 @@ function ensureMainBranch() {
   const branch = read("git", ["branch", "--show-current"]);
 
   if (branch !== "main") {
-    fail(`Releases must be prepared from main. Current branch: ${branch || "(detached)"}.`);
+    fail(
+      `Releases must be prepared from main. Current branch: ${branch || "(detached)"}.`
+    );
   }
 }
 
@@ -148,15 +156,21 @@ function ensureCleanTree() {
   const status = read("git", ["status", "--porcelain"]);
 
   if (status) {
-    fail("Working tree is not clean. Commit or stash changes before releasing.");
+    fail(
+      "Working tree is not clean. Commit or stash changes before releasing."
+    );
   }
 }
 
 function tagExists(tagName) {
   try {
-    execFileSync("git", ["rev-parse", "--verify", "--quiet", `refs/tags/${tagName}`], {
-      stdio: "ignore",
-    });
+    execFileSync(
+      "git",
+      ["rev-parse", "--verify", "--quiet", `refs/tags/${tagName}`],
+      {
+        stdio: "ignore",
+      }
+    );
     return true;
   } catch {
     return false;

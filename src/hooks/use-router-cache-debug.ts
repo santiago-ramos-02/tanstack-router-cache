@@ -25,6 +25,7 @@ type RouterCacheDebugApi = {
 };
 
 declare global {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: Window must be extended through interface merging.
   interface Window {
     __TANSTACK_ROUTER_CACHE_DEBUG__?: RouterCacheDebugApi;
   }
@@ -159,10 +160,6 @@ export function useRouterCacheDebug(
         lastWarnedCountRef.current !== nextSnapshot.totalCachedRouteCount
       ) {
         lastWarnedCountRef.current = nextSnapshot.totalCachedRouteCount;
-        console.warn(
-          "[tanstack-router-cache] cached route count exceeded threshold",
-          nextSnapshot
-        );
       }
     });
 

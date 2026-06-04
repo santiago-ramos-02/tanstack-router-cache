@@ -9,9 +9,9 @@ import { ActiveBadge } from "../components/active-badge";
 import { StatusMetric } from "../components/status-metric";
 import {
   ACTIVITY_LOG_LIMIT,
+  CUSTOMER_NOTES,
   createActivityEntry,
   createSessionStamp,
-  CUSTOMER_NOTES,
   formatClock,
   SECOND_MS,
 } from "../data";
@@ -43,10 +43,10 @@ function draftReducer(state: DraftState, action: DraftAction): DraftState {
     case "activity":
       return {
         ...state,
-        activity: [
-          createActivityEntry(action.label),
-          ...state.activity,
-        ].slice(0, ACTIVITY_LOG_LIMIT),
+        activity: [createActivityEntry(action.label), ...state.activity].slice(
+          0,
+          ACTIVITY_LOG_LIMIT
+        ),
       };
     case "notes":
       return { ...state, notes: action.value };
