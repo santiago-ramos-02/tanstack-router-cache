@@ -8,15 +8,32 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 process.chdir(root);
 
 const stableVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+const publishWorkflow = "publish.yml";
+const githubRepository = "santiago-ramos-02/tanstack-router-cache";
+const publishRunLookupAttempts = 12;
+const publishRunLookupIntervalMs = 5000;
+const npmVersionLookupAttempts = 12;
+const npmVersionLookupIntervalMs = 5000;
+const sharedBufferBytes = 4;
 const command = process.argv[2];
 
-if (command === "prepare") {
+if (command === "release") {
+  releaseVersion(process.argv[3]);
+} else if (command === "prepare") {
   prepareRelease(process.argv[3]);
 } else if (command === "push") {
   pushRelease();
 } else {
   printUsage();
   process.exit(1);
+}
+
+function releaseVersion(versionSpec) {
+  const release = prepareRelease(versionSpec);
+  pushRelease();
+  createGitHubRelease(release.tagName);
+  watchPublishWorkflow(release.tagName);
+  verifyNpmVersion(release.packageName, release.version);
 }
 
 function prepareRelease(versionSpec) {
@@ -45,6 +62,12 @@ function prepareRelease(versionSpec) {
   run("git", ["tag", tagName]);
 
   console.log(`Prepared ${tagName}. Run "bun run release:push" to publish.`);
+
+  return {
+    packageName: packageJson.name,
+    tagName,
+    version: nextVersion,
+  };
 }
 
 function pushRelease() {
@@ -73,6 +96,63 @@ function pushRelease() {
   run("git", ["push", "origin", tagName]);
 
   console.log(`${tagName} pushed. GitHub Actions will publish it to npm.`);
+}
+
+function createGitHubRelease(tagName) {
+  if (ghReleaseExists(tagName)) {
+    run("gh", [
+      "release",
+      "edit",
+      tagName,
+      "--repo",
+      githubRepository,
+      "--latest",
+    ]);
+    return;
+  }
+
+  run("gh", [
+    "release",
+    "create",
+    tagName,
+    "--repo",
+    githubRepository,
+    "--verify-tag",
+    "--generate-notes",
+    "--latest",
+  ]);
+}
+
+function watchPublishWorkflow(tagName) {
+  const runId = findPublishRunId(tagName);
+
+  run("gh", [
+    "run",
+    "watch",
+    runId,
+    "--repo",
+    githubRepository,
+    "--exit-status",
+  ]);
+}
+
+function verifyNpmVersion(packageName, version) {
+  for (let attempt = 0; attempt < npmVersionLookupAttempts; attempt += 1) {
+    const publishedVersion = readIfSuccessful("npm", [
+      "view",
+      `${packageName}@${version}`,
+      "version",
+    ]);
+
+    if (publishedVersion === version) {
+      console.log(`${packageName}@${version} is available on npm.`);
+      return;
+    }
+
+    sleep(npmVersionLookupIntervalMs);
+  }
+
+  fail(`Could not verify ${packageName}@${version} on npm.`);
 }
 
 function readPackageJson() {
@@ -177,8 +257,61 @@ function tagExists(tagName) {
   }
 }
 
+function ghReleaseExists(tagName) {
+  try {
+    execFileSync(
+      "gh",
+      ["release", "view", tagName, "--repo", githubRepository],
+      {
+        stdio: "ignore",
+      }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function findPublishRunId(tagName) {
+  for (let attempt = 0; attempt < publishRunLookupAttempts; attempt += 1) {
+    const runs = JSON.parse(
+      read("gh", [
+        "run",
+        "list",
+        "--repo",
+        githubRepository,
+        "--workflow",
+        publishWorkflow,
+        "--limit",
+        "10",
+        "--json",
+        "databaseId,headBranch,status",
+      ])
+    );
+    const publishRun = runs.find(
+      (workflowRun) => workflowRun.headBranch === tagName
+    );
+
+    if (publishRun) {
+      return String(publishRun.databaseId);
+    }
+
+    sleep(publishRunLookupIntervalMs);
+  }
+
+  fail(`Could not find the ${publishWorkflow} run for ${tagName}.`);
+}
+
 function read(file, args) {
   return execFileSync(file, args, { encoding: "utf8" }).trim();
+}
+
+function readIfSuccessful(file, args) {
+  try {
+    return read(file, args);
+  } catch {
+    return "";
+  }
 }
 
 function run(file, args) {
@@ -190,8 +323,22 @@ function fail(message) {
   process.exit(1);
 }
 
+function sleep(ms) {
+  Atomics.wait(
+    new Int32Array(new SharedArrayBuffer(sharedBufferBytes)),
+    0,
+    0,
+    ms
+  );
+}
+
 function printUsage() {
   console.log(`Usage:
+  bun run release:patch
+  bun run release patch
+  bun run release minor
+  bun run release major
+  bun run release 0.2.0
   bun run release:prepare patch
   bun run release:prepare minor
   bun run release:prepare major

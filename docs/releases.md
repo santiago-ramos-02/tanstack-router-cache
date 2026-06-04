@@ -34,15 +34,23 @@ That updates GitHub and runs CI, but it does not publish to npm.
 For a release, start from a clean `main` branch after your changes are already committed:
 
 ```sh
-bun run release:prepare patch
-bun run release:push
+bun run release:patch
 ```
 
 Use `minor`, `major`, or an exact version when needed:
 
 ```sh
-bun run release:prepare minor
-bun run release:prepare 0.2.0
+bun run release minor
+bun run release 0.2.0
+```
+
+`release` updates `package.json`, runs the package checks, commits the version bump, creates the matching tag, pushes `main` and the tag, creates the GitHub Release, waits for the publish workflow, and verifies that npm has the new package version.
+
+The lower-level commands are still available when you need to split the release into two steps:
+
+```sh
+bun run release:prepare patch
+bun run release:push
 ```
 
 `release:prepare` updates `package.json`, runs the package checks, commits the version bump, and creates the matching tag locally. `release:push` pushes `main` and that exact tag. The tag starts the npm publish workflow.
