@@ -34,7 +34,7 @@ That updates GitHub and runs CI, but it does not publish to npm.
 For a release, start from a clean `main` branch after your changes are already committed:
 
 ```sh
-bun run release:patch
+bun run release patch
 ```
 
 Use `minor`, `major`, or an exact version when needed:

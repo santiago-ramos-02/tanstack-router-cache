@@ -334,7 +334,6 @@ function sleep(ms) {
 
 function printUsage() {
   console.log(`Usage:
-  bun run release:patch
   bun run release patch
   bun run release minor
   bun run release major
