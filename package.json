@@ -1,6 +1,6 @@
 {
   "name": "tanstack-router-cache",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Route view caching for TanStack Router.",
   "type": "module",
   "license": "MIT",
