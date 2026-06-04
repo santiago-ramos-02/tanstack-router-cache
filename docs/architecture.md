@@ -131,8 +131,8 @@ classDiagram
   }
 
   class RouterSnapshot {
-    static stores
-    static matches
+    snapshot stores
+    snapshot matches
     live navigate
     live invalidate
     live preloadRoute
@@ -149,21 +149,21 @@ classDiagram
 | `routeId` | TanStack route id. Used by `maxEntriesPerRouteId`. |
 | `staticData` | Route static data. The route is cacheable when `routeCache` is `true`. |
 | `matchId` | Match id used to render the cached route with TanStack Router's `Match`. |
-| `routerSnapshot` | Frozen router-like object used by the cached route tree. |
+| `routerSnapshot` | Router-like object with isolated snapshot stores used by the cached route tree. |
 | `ready` | Marks that the route has a complete snapshot and can be rendered from cache. |
 
 Pathnames are normalized by removing trailing slashes except for `/`, so `/customers/` and `/customers` share one cache key.
 
 ## Router snapshot
 
-Cached route trees still expect TanStack Router context. Instead of keeping every cached tree connected to the live router stores, the package creates a router snapshot when a route becomes ready.
+Cached route trees still expect TanStack Router context. Instead of connecting every cached tree directly to the live router stores, the package creates a router-like snapshot when a route becomes ready.
 
 ```mermaid
 flowchart TD
   liveRouter["Live router"]
   matches["Current matches"]
   location["Current location"]
-  staticStores["Static stores"]
+  snapshotStores["Snapshot stores"]
   liveMethods["Bound live methods"]
   routerSnapshot["Router snapshot"]
   cachedOutlet["CachedOutlet"]
@@ -171,18 +171,18 @@ flowchart TD
 
   liveRouter --> matches
   liveRouter --> location
-  matches --> staticStores
-  location --> staticStores
+  matches --> snapshotStores
+  location --> snapshotStores
   liveRouter --> liveMethods
-  staticStores --> routerSnapshot
+  snapshotStores --> routerSnapshot
   liveMethods --> routerSnapshot
   routerSnapshot --> cachedOutlet
   cachedOutlet --> match
 ```
 
-The snapshot copies the current matches, location, resolved location, and match stores. It also keeps selected live router methods bound to the real router, including `navigate`, `invalidate`, `preloadRoute`, and location builders.
+The snapshot owns isolated stores for the current matches, location, resolved location, and match stores. It also keeps selected live router methods bound to the real router, including `navigate`, `invalidate`, `preloadRoute`, and location builders.
 
-This gives hidden cached routes a stable route view while still allowing imperative router actions to call through to the real router.
+When the cached entry is refreshed, the cache manager updates those snapshot stores in place. This lets route hooks read current match and search data without remounting the retained route tree. Imperative router actions still call through to the real router.
 
 `CachedOutlet` renders that snapshot like this:
 

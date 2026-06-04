@@ -30,15 +30,35 @@ type RouterMatch = ReturnType<typeof useMatches>[number] & {
   staticData?: StaticDataRouteOption;
   status?: string;
 };
-type StaticStore<T> = {
+type RouterStore<T> = {
   get: () => T;
-  subscribe: () => {
+  subscribe: (listener?: (value: T) => void) => {
     unsubscribe: () => void;
   };
 };
-type MatchStore = StaticStore<RouterMatch> & {
+type SnapshotStore<T> = RouterStore<T> & {
+  set: (value: T) => void;
+};
+type MatchStore = SnapshotStore<RouterMatch> & {
   routeId: string;
 };
+type RouterSnapshotInput = {
+  matches: Array<RouterMatch | undefined>;
+  router: ReturnType<typeof useRouter>;
+  routerLocation: RouterLocation;
+  routerResolvedLocation?: RouterLocation;
+};
+type RouterSnapshotData = {
+  matches: RouterMatch[];
+  state: ReturnType<
+    ReturnType<typeof useRouter>["stores"]["__store"]["get"]
+  > & {
+    location: RouterLocation;
+    matches: RouterMatch[];
+    resolvedLocation?: RouterLocation;
+  };
+};
+type RouterSnapshotUpdater = (input: RouterSnapshotInput) => void;
 type SetCachedRoutes = ReturnType<
   typeof useRouterCacheContext
 >["setCachedRoutes"];
@@ -62,13 +82,89 @@ const LIVE_ROUTER_METHODS = [
   "preloadRoute",
 ] as const;
 
-function createStaticStore<T>(value: T) {
+const routerSnapshotUpdaters = new WeakMap<
+  NonNullable<RouterSnapshot>,
+  RouterSnapshotUpdater
+>();
+
+function createSnapshotStore<T>(value: T): SnapshotStore<T> {
+  let currentValue = value;
+  const listeners = new Set<(value: T) => void>();
+
   return {
-    get: () => value,
-    subscribe: () => ({
-      unsubscribe: () => undefined,
-    }),
+    get: () => currentValue,
+    set: (nextValue: T) => {
+      if (Object.is(currentValue, nextValue)) {
+        return;
+      }
+
+      currentValue = nextValue;
+
+      for (const listener of listeners) {
+        listener(currentValue);
+      }
+    },
+    subscribe: (listener?: (value: T) => void) => {
+      if (listener) {
+        listeners.add(listener);
+      }
+
+      return {
+        unsubscribe: listener
+          ? () => {
+              listeners.delete(listener);
+            }
+          : () => undefined,
+      };
+    },
   };
+}
+
+function createRouterSnapshotData({
+  matches,
+  router,
+  routerLocation,
+  routerResolvedLocation,
+}: RouterSnapshotInput): RouterSnapshotData {
+  const snapshotMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
+    const nextMatch = snapshotMatch(match, routerLocation);
+
+    if (isRouterMatch(nextMatch)) {
+      snapshot.push(nextMatch);
+    }
+
+    return snapshot;
+  }, []);
+
+  return {
+    matches: snapshotMatches,
+    state: {
+      ...router.stores.__store.get(),
+      matches: snapshotMatches,
+      location: routerLocation,
+      resolvedLocation: routerResolvedLocation,
+    },
+  };
+}
+
+function createMatchStore(match: RouterMatch): MatchStore {
+  return Object.assign(createSnapshotStore(match), {
+    routeId: match.routeId,
+  });
+}
+
+function syncRouterSnapshot(
+  routerSnapshot: NonNullable<RouterSnapshot>,
+  input: RouterSnapshotInput
+) {
+  const update = routerSnapshotUpdaters.get(routerSnapshot);
+
+  if (!update) {
+    return false;
+  }
+
+  update(input);
+  return true;
 }
 
 function getLiveRouterMethodDescriptors(router: ReturnType<typeof useRouter>) {
@@ -159,27 +255,42 @@ function isRouterMatch(match: RouterMatch | undefined): match is RouterMatch {
 }
 
 function snapshotMatch(
-  match: RouterMatch | undefined
+  match: RouterMatch | undefined,
+  routerLocation: RouterLocation
 ): RouterMatch | undefined {
   if (!isRouterMatch(match)) {
     return;
   }
 
+  const isLocationMatch = match.pathname
+    ? normalizeCachedRoutePathname(match.pathname) ===
+      normalizeCachedRoutePathname(routerLocation.pathname)
+    : false;
+
   return {
     ...match,
+    ...(isLocationMatch
+      ? {
+          _strictSearch: routerLocation.search,
+          search: routerLocation.search,
+        }
+      : {}),
     _nonReactive: {
       ...match._nonReactive,
     },
   };
 }
 
-function shouldRefreshCachedRoute(
+function isCurrentUnmanagedCachedRoute(
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string],
   routerHref?: string
 ) {
-  return (
-    !(isRouteCacheEnabled(route?.staticData) && route.ready) ||
-    route.href !== routerHref
+  return Boolean(
+    route &&
+      isRouteCacheEnabled(route.staticData) &&
+      route.ready &&
+      route.routerSnapshot &&
+      route.href === routerHref
   );
 }
 
@@ -208,8 +319,27 @@ function syncReadyCachedRoute({
   setCachedRoutes: SetCachedRoutes;
   staticData: StaticDataRouteOption;
 }) {
-  if (!shouldRefreshCachedRoute(route, routerHref)) {
-    return;
+  const routerSnapshotInput = {
+    matches,
+    router,
+    routerLocation,
+    routerResolvedLocation,
+  };
+  let routerSnapshot = matchId ? route?.routerSnapshot : undefined;
+
+  if (
+    routerSnapshot &&
+    !syncRouterSnapshot(routerSnapshot, routerSnapshotInput)
+  ) {
+    if (isCurrentUnmanagedCachedRoute(route, routerHref)) {
+      return;
+    }
+
+    routerSnapshot = undefined;
+  }
+
+  if (matchId && !routerSnapshot) {
+    routerSnapshot = createRouterSnapshot(routerSnapshotInput);
   }
 
   setCachedRoutes(routerPathname, {
@@ -217,14 +347,7 @@ function syncReadyCachedRoute({
     matchId,
     routeId,
     ready: true,
-    routerSnapshot: matchId
-      ? createRouterSnapshot({
-          matches,
-          router,
-          routerLocation,
-          routerResolvedLocation,
-        })
-      : undefined,
+    routerSnapshot,
     staticData,
   });
 }
@@ -300,79 +423,52 @@ function syncCachedRouteState({
   }
 }
 
-function createRouterSnapshot({
-  matches,
-  router,
-  routerLocation,
-  routerResolvedLocation,
-}: {
-  matches: Array<RouterMatch | undefined>;
-  router: ReturnType<typeof useRouter>;
-  routerLocation: RouterLocation;
-  routerResolvedLocation?: RouterLocation;
-}): RouterSnapshot {
-  const snapshotMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
-    const nextMatch = snapshotMatch(match);
-
-    if (isRouterMatch(nextMatch)) {
-      snapshot.push(nextMatch);
-    }
-
-    return snapshot;
-  }, []);
+function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
+  const { router, routerLocation, routerResolvedLocation } = input;
+  const snapshotData = createRouterSnapshotData(input);
+  const snapshotMatches = snapshotData.matches;
   const matchStores = new Map<string, MatchStore>(
-    snapshotMatches.map((match) => {
-      const store = Object.assign(createStaticStore(match), {
-        routeId: match.routeId,
-      });
-      return [match.id, store];
-    })
+    snapshotMatches.map((match) => [match.id, createMatchStore(match)])
   );
-  const snapshotState = {
-    ...router.stores.__store.get(),
-    matches: snapshotMatches,
-    location: routerLocation,
-    resolvedLocation: routerResolvedLocation,
-  };
 
   const routeMatchStoreCache = new Map<
     string,
-    StaticStore<RouterMatch | undefined>
+    SnapshotStore<RouterMatch | undefined>
   >();
 
   const stores = {
     ...router.stores,
-    status: createStaticStore(router.stores.status.get()),
-    loadedAt: createStaticStore(router.stores.loadedAt.get()),
-    isLoading: createStaticStore(router.stores.isLoading.get()),
-    isTransitioning: createStaticStore(router.stores.isTransitioning.get()),
-    location: createStaticStore(routerLocation),
-    resolvedLocation: createStaticStore(routerResolvedLocation),
-    statusCode: createStaticStore(router.stores.statusCode.get()),
-    redirect: createStaticStore(router.stores.redirect.get()),
-    matchesId: createStaticStore(snapshotMatches.map((match) => match.id)),
-    pendingIds: createStaticStore<string[]>([]),
-    cachedIds: createStaticStore<string[]>([]),
-    matches: createStaticStore(snapshotMatches),
-    pendingMatches: createStaticStore<RouterMatch[]>([]),
-    cachedMatches: createStaticStore<RouterMatch[]>([]),
-    firstId: createStaticStore(snapshotMatches[0]?.id),
-    hasPending: createStaticStore(
+    status: createSnapshotStore(router.stores.status.get()),
+    loadedAt: createSnapshotStore(router.stores.loadedAt.get()),
+    isLoading: createSnapshotStore(router.stores.isLoading.get()),
+    isTransitioning: createSnapshotStore(router.stores.isTransitioning.get()),
+    location: createSnapshotStore(routerLocation),
+    resolvedLocation: createSnapshotStore(routerResolvedLocation),
+    statusCode: createSnapshotStore(router.stores.statusCode.get()),
+    redirect: createSnapshotStore(router.stores.redirect.get()),
+    matchesId: createSnapshotStore(snapshotMatches.map((match) => match.id)),
+    pendingIds: createSnapshotStore<string[]>([]),
+    cachedIds: createSnapshotStore<string[]>([]),
+    matches: createSnapshotStore(snapshotMatches),
+    pendingMatches: createSnapshotStore<RouterMatch[]>([]),
+    cachedMatches: createSnapshotStore<RouterMatch[]>([]),
+    firstId: createSnapshotStore(snapshotMatches[0]?.id),
+    hasPending: createSnapshotStore(
       snapshotMatches.some((match) => match.status === "pending")
     ),
-    matchRouteDeps: createStaticStore({
+    matchRouteDeps: createSnapshotStore({
       locationHref: routerLocation.href,
       resolvedLocationHref: routerResolvedLocation?.href,
-      status: snapshotState.status,
+      status: snapshotData.state.status,
     }),
-    __store: createStaticStore(snapshotState),
+    __store: createSnapshotStore(snapshotData.state),
     matchStores,
     pendingMatchStores: new Map(),
     cachedMatchStores: new Map(),
     getRouteMatchStore: (routeId: string) => {
       let cached = routeMatchStoreCache.get(routeId);
       if (!cached) {
-        cached = createStaticStore(
+        cached = createSnapshotStore(
           snapshotMatches.find((match) => match.routeId === routeId)
         );
         routeMatchStoreCache.set(routeId, cached);
@@ -384,13 +480,68 @@ function createRouterSnapshot({
     setCached: () => undefined,
   };
 
+  const updateSnapshot: RouterSnapshotUpdater = (nextInput) => {
+    const nextData = createRouterSnapshotData(nextInput);
+    const nextMatches = nextData.matches;
+    const nextMatchIds = new Set(nextMatches.map((match) => match.id));
+    const nextMatchesByRouteId = new Map(
+      nextMatches.map((match) => [match.routeId, match])
+    );
+
+    for (const match of nextMatches) {
+      const store = matchStores.get(match.id);
+
+      if (store) {
+        store.set(match);
+        continue;
+      }
+
+      matchStores.set(match.id, createMatchStore(match));
+    }
+
+    for (const [matchId] of matchStores) {
+      if (!nextMatchIds.has(matchId)) {
+        matchStores.delete(matchId);
+      }
+    }
+
+    stores.status.set(nextInput.router.stores.status.get());
+    stores.loadedAt.set(nextInput.router.stores.loadedAt.get());
+    stores.isLoading.set(nextInput.router.stores.isLoading.get());
+    stores.isTransitioning.set(nextInput.router.stores.isTransitioning.get());
+    stores.location.set(nextInput.routerLocation);
+    stores.resolvedLocation.set(nextInput.routerResolvedLocation);
+    stores.statusCode.set(nextInput.router.stores.statusCode.get());
+    stores.redirect.set(nextInput.router.stores.redirect.get());
+    stores.matchesId.set(nextMatches.map((match) => match.id));
+    stores.pendingIds.set([]);
+    stores.cachedIds.set([]);
+    stores.matches.set(nextMatches);
+    stores.pendingMatches.set([]);
+    stores.cachedMatches.set([]);
+    stores.firstId.set(nextMatches[0]?.id);
+    stores.hasPending.set(
+      nextMatches.some((match) => match.status === "pending")
+    );
+    stores.matchRouteDeps.set({
+      locationHref: nextInput.routerLocation.href,
+      resolvedLocationHref: nextInput.routerResolvedLocation?.href,
+      status: nextData.state.status,
+    });
+    stores.__store.set(nextData.state);
+
+    for (const [routeId, store] of routeMatchStoreCache) {
+      store.set(nextMatchesByRouteId.get(routeId));
+    }
+  };
+
   const routerSnapshot: RouterSnapshot = Object.create(router);
   Object.defineProperties(routerSnapshot, {
     stores: {
       value: stores,
     },
     latestLocation: {
-      value: routerLocation,
+      get: () => stores.location.get(),
     },
     getMatch: {
       value: (matchId: string) => matchStores.get(matchId)?.get(),
@@ -400,6 +551,8 @@ function createRouterSnapshot({
     },
     ...getLiveRouterMethodDescriptors(router),
   });
+
+  routerSnapshotUpdaters.set(routerSnapshot, updateSnapshot);
 
   return routerSnapshot;
 }
@@ -572,9 +725,7 @@ function RouteCacheManager() {
   const previousRouteCacheModesRef = useRef<Map<string, ActivityMode> | null>(
     null
   );
-  if (previousRouteCacheModesRef.current === null) {
-    previousRouteCacheModesRef.current = new Map();
-  }
+  previousRouteCacheModesRef.current ??= new Map();
   const previousVisiblePathnameRef = useRef<string | undefined>(undefined);
 
   const routerLocation = useRouterState({
@@ -718,9 +869,7 @@ function RouteCacheManager() {
   }, [destinationRoute, eventListener, routerPathname, visiblePathname]);
 
   useLayoutEffect(() => {
-    if (previousRouteCacheModesRef.current === null) {
-      previousRouteCacheModesRef.current = new Map();
-    }
+    previousRouteCacheModesRef.current ??= new Map();
 
     previousRouteCacheModesRef.current = syncCachedRouteActivityEvents({
       cachedRoutes,
