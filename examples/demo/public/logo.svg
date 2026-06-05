@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">ClaimDesk Live logo</title>
+  <desc id="desc">A shield-shaped mark with a claim desk monogram.</desc>
+  <rect width="512" height="512" rx="92" fill="#14312d"/>
+  <path d="M256 70 398 122v108c0 88-56 151-142 198-86-47-142-110-142-198V122z" fill="#176f6a"/>
+  <path d="M256 98 370 140v88c0 72-43 126-114 166-71-40-114-94-114-166v-88z" fill="#edf3f1"/>
+  <path d="M184 181h132c30 0 54 24 54 54v6h-48v-6c0-4-2-8-6-8H184c-4 0-8 4-8 8v74c0 4 4 8 8 8h132c4 0 6-4 6-8v-8h48v8c0 30-24 54-54 54H184c-30 0-54-24-54-54v-74c0-30 24-54 54-54z" fill="#14312d"/>
+  <path d="M220 258h152v42H220z" fill="#b14c31"/>
+  <circle cx="374" cy="279" r="42" fill="#f0bf4c"/>
+  <path d="M360 280h28M374 266v28" stroke="#14312d" stroke-width="16" stroke-linecap="round"/>
+</svg>

@@ -11,8 +11,19 @@ export function AppShell() {
         </a>
         <header className="top-bar">
           <div className="brand-block">
-            <p className="eyebrow">tanstack-router-cache</p>
-            <h1>Keep a busy page alive.</h1>
+            <div className="brand-lockup">
+              <img
+                alt=""
+                className="brand-logo"
+                height="34"
+                src="/logo.svg"
+                width="34"
+              />
+              <div className="brand-copy">
+                <p className="brand-name">ClaimDesk Live</p>
+                <p className="eyebrow">Northline Mutual</p>
+              </div>
+            </div>
           </div>
           <nav aria-label="Demo areas">
             <ul className="nav-list">
@@ -20,7 +31,7 @@ export function AppShell() {
                 <NavigationLink label="Live case" to="/" />
               </li>
               <li className="nav-group">
-                <NavigationLink label="Guided demo" to="/basic" />
+                <span className="nav-label">Compare</span>
                 <ul className="nav-children">
                   <li>
                     <NavigationLink
@@ -37,7 +48,7 @@ export function AppShell() {
                 </ul>
               </li>
               <li className="nav-group">
-                <NavigationLink label="Advanced" to="/advanced" />
+                <span className="nav-label">Workbench</span>
                 <ul className="nav-children">
                   <li>
                     <NavigationLink label="Case plan" to="/advanced/draft" />
@@ -47,9 +58,6 @@ export function AppShell() {
                       label="Repair network"
                       to="/advanced/catalog"
                     />
-                  </li>
-                  <li>
-                    <NavigationLink label="Fresh page" to="/advanced/regular" />
                   </li>
                 </ul>
               </li>

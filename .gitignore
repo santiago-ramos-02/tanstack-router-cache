@@ -17,3 +17,5 @@ temp-*
 
 .tanstack
 **/.vitepress/cache
+
+.vercel

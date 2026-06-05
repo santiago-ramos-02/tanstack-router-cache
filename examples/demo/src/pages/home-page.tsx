@@ -4,6 +4,20 @@ import { StatusMetric } from "../components/status-metric";
 
 const routeApi = getRouteApi("/");
 
+const routeCacheSnippet = [
+  "const liveCase = createRoute({",
+  '  path: "/",',
+  "  staticData: { routeCache: true },",
+  "  staleTime: Number.POSITIVE_INFINITY,",
+  "});",
+  "",
+  "const scratchNote = createRoute({",
+  '  path: "/basic/regular-form",',
+  "  gcTime: 0,",
+  '  loader: { staleReloadMode: "blocking" },',
+  "});",
+].join("\n");
+
 export function HomePage() {
   const claimFile = routeApi.useLoaderData();
   const [adjuster, setAdjuster] = useState(claimFile.adjuster);
@@ -18,7 +32,7 @@ export function HomePage() {
           <header className="case-title">
             <div>
               <p className="eyebrow">Claim {claimFile.claimNumber}</p>
-              <h2>The claim file stays exactly where you left it.</h2>
+              <h2>Edit. Leave. Return.</h2>
             </div>
             <span className="active-badge">Live case</span>
           </header>
@@ -74,46 +88,24 @@ export function HomePage() {
         </section>
 
         <aside aria-label="Demo checklist" className="case-brief">
-          <p className="eyebrow">Try this</p>
+          <p className="eyebrow">Clip path</p>
+          <h3>Saved stays. Fresh resets.</h3>
           <ol className="step-list">
-            <li>Change the customer note.</li>
+            <li>Edit the note.</li>
             <li>Open the inbox.</li>
-            <li>Come back to the live case.</li>
+            <li>Return here.</li>
           </ol>
-          <div className="metric-grid">
-            <StatusMetric label="Prepared" value={claimFile.preparedAt} />
-            <StatusMetric label="First wait" value={`${claimFile.delayMs}ms`} />
-            <StatusMetric label="Desk id" value={claimFile.deskId} />
-            <StatusMetric
-              label="Note size"
-              value={`${claimNote.length} chars`}
-            />
-          </div>
-          <p>
-            The inbox starts fresh. This claim keeps the note, selected status,
-            checkbox, and scroll position ready for the customer call.
-          </p>
+          <StatusMetric label="Note size" value={`${claimNote.length} chars`} />
+          <details className="code-panel">
+            <summary>Code</summary>
+            <pre>
+              <code>{routeCacheSnippet}</code>
+            </pre>
+          </details>
           <Link className="text-link" to="/advanced">
-            Open advanced workbench
+            Advanced workbench
           </Link>
         </aside>
-      </div>
-
-      <div className="feature-grid">
-        <Link className="value-card value-card-accent" to="/basic/saved-form">
-          <span>Saved claim file</span>
-          <p>Leave mid-sentence and return with the same work in place.</p>
-        </Link>
-        <Link className="value-card" to="/basic/regular-form">
-          <span>Scratch note</span>
-          <p>Use the reset page to see how a regular screen behaves.</p>
-        </Link>
-        <Link className="value-card" to="/advanced/catalog">
-          <span>Repair network</span>
-          <p>
-            Filter and shortlist vendors, then leave without losing context.
-          </p>
-        </Link>
       </div>
     </section>
   );

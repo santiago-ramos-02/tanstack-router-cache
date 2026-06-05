@@ -1,5 +1,4 @@
 import { useRouteCacheNavigation, useRouterCache } from "tanstack-router-cache";
-import { StatusMetric } from "./status-metric";
 
 const pageLabels: Record<string, string> = {
   "/": "Live case",
@@ -29,22 +28,12 @@ export function CachePanel() {
         <h2>Saved pages</h2>
       </div>
 
-      <div className="metric-grid">
-        <StatusMetric
-          label="Opening"
-          value={
-            activeNavigation ? getPageLabel(activeNavigation.pathname) : "Ready"
-          }
-        />
-        <StatusMetric
-          label="Last return"
-          value={
-            lastCompletedNavigation
-              ? `${Math.round(lastCompletedNavigation.duration)}ms`
-              : "None yet"
-          }
-        />
-      </div>
+      <p className="shelf-meta">
+        {activeNavigation ? getPageLabel(activeNavigation.pathname) : "Ready"}
+        {lastCompletedNavigation
+          ? ` · ${Math.round(lastCompletedNavigation.duration)}ms return`
+          : ""}
+      </p>
 
       <div className="cache-list">
         {pathnames.length === 0 ? (

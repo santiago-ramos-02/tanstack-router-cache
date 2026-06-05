@@ -1,0 +1,16 @@
+{
+  "name": "ClaimDesk Live",
+  "short_name": "ClaimDesk",
+  "description": "Interactive claims workspace demo for route view caching.",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#14312d",
+  "background_color": "#edf3f1",
+  "display": "standalone"
+}
