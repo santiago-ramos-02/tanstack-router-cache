@@ -19,7 +19,6 @@ export function NavigationLink({
       activeOptions={{ exact: true }}
       activeProps={{ "data-active": "true" }}
       className="nav-link"
-      preload="intent"
       to={to}
     >
       {label}

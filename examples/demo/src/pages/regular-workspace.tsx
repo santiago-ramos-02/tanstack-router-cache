@@ -1,11 +1,13 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { StatusMetric } from "../components/status-metric";
-import { createSessionStamp, SECOND_MS } from "../data";
+import { SECOND_MS } from "../data";
+
+const routeApi = getRouteApi("/power/regular");
 
 export function RegularWorkspace() {
-  const [stamp] = useState(() => createSessionStamp());
-  const [headline, setHeadline] = useState("Temporary note");
+  const freshWorkspace = routeApi.useLoaderData();
+  const [headline, setHeadline] = useState(freshWorkspace.headline);
   const [detail, setDetail] = useState("");
   const [seconds, setSeconds] = useState(0);
 
@@ -23,23 +25,25 @@ export function RegularWorkspace() {
     <section className="page-stack">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Normal route</p>
-          <h2>Default reset behavior</h2>
+          <p className="eyebrow">Fresh page</p>
+          <h2>This room starts over each time.</h2>
           <p>
-            This route is not retained, so local state starts fresh after route
-            changes.
+            Use this page as the control check when you want to compare a saved
+            workspace with a normal reset.
           </p>
         </div>
-        <span className="active-badge muted">Resets</span>
+        <span className="active-badge muted">Starts fresh</span>
       </header>
 
-      <section
-        aria-label="Normal route form"
-        className="form-panel compact-form"
-      >
+      <section aria-label="Fresh page form" className="form-panel compact-form">
         <div className="metric-grid">
-          <StatusMetric label="Workspace" value={stamp} />
-          <StatusMetric label="Mounted time" value={`${seconds}s`} />
+          <StatusMetric label="Prepared" value={freshWorkspace.preparedAt} />
+          <StatusMetric
+            label="First wait"
+            value={`${freshWorkspace.delayMs}ms`}
+          />
+          <StatusMetric label="Desk id" value={freshWorkspace.deskId} />
+          <StatusMetric label="Open time" value={`${seconds}s`} />
         </div>
         <label>
           <span>Headline</span>
@@ -52,17 +56,17 @@ export function RegularWorkspace() {
           <span>Details</span>
           <textarea
             onChange={(event) => setDetail(event.target.value)}
-            placeholder="Add text, leave the page, then return."
+            placeholder="Add a temporary note, leave, then return."
             rows={8}
             value={detail}
           />
         </label>
         <div className="button-row">
           <Link className="primary-button" to="/power/draft">
-            Open retained draft
+            Open case plan
           </Link>
           <Link className="secondary-button" to="/power/catalog">
-            Open retained catalog
+            Open repair network
           </Link>
         </div>
       </section>

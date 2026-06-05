@@ -6,27 +6,26 @@ export function AppShell() {
   return (
     <RouterCacheProvider maxEntries={6} maxEntriesPerRouteId={2}>
       <div className="app-shell">
-        <aside className="sidebar">
-          <div>
+        <a className="skip-link" href="#main-content">
+          Skip to case
+        </a>
+        <header className="top-bar">
+          <div className="brand-block">
             <p className="eyebrow">tanstack-router-cache</p>
-            <h1>Route state that stays ready</h1>
+            <h1>Keep a busy page alive.</h1>
           </div>
-          <nav aria-label="Demo routes" className="nav-list">
-            <NavigationLink label="Overview" to="/" />
-            <NavigationLink label="Basic setup" to="/basic" />
-            <NavigationLink label="Saved form" to="/basic/saved-form" />
-            <NavigationLink label="Regular form" to="/basic/regular-form" />
-            <NavigationLink label="Power demo" to="/power" />
-            <NavigationLink label="Draft workspace" to="/power/draft" />
-            <NavigationLink label="Catalog" to="/power/catalog" />
-            <NavigationLink label="Normal route" to="/power/regular" />
+          <nav aria-label="Demo areas" className="nav-list">
+            <NavigationLink label="Live case" to="/" />
+            <NavigationLink label="Guided demo" to="/basic" />
+            <NavigationLink label="Saved claim" to="/basic/saved-form" />
+            <NavigationLink label="Scratch note" to="/basic/regular-form" />
+            <NavigationLink label="Advanced" to="/power" />
+            <NavigationLink label="Case plan" to="/power/draft" />
+            <NavigationLink label="Repair network" to="/power/catalog" />
+            <NavigationLink label="Fresh page" to="/power/regular" />
           </nav>
-          <div className="sidebar-note">
-            The basic flow is what most apps need. The power flow shows heavier
-            retained-route behavior for edge cases.
-          </div>
-        </aside>
-        <main className="route-surface">
+        </header>
+        <main className="route-surface" id="main-content">
           <RouterCacheOutlet />
         </main>
         <CachePanel />

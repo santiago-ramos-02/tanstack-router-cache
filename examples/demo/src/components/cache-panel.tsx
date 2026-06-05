@@ -1,41 +1,56 @@
 import { useRouteCacheNavigation, useRouterCache } from "tanstack-router-cache";
 import { StatusMetric } from "./status-metric";
 
+const pageLabels: Record<string, string> = {
+  "/": "Live case",
+  "/basic/saved-form": "Saved claim",
+  "/power/catalog": "Repair network",
+  "/power/draft": "Case plan",
+};
+
+function getPageLabel(pathname: string) {
+  return pageLabels[pathname] ?? pathname;
+}
+
 export function CachePanel() {
-  const { cachedRoutes, destroy, destroyAll } = useRouterCache();
+  const { cachedRoutes, destroy } = useRouterCache();
   const { activeNavigation, lastCompletedNavigation } =
     useRouteCacheNavigation();
-  const pathnames = Object.keys(cachedRoutes).sort((a, b) =>
-    a.localeCompare(b)
-  );
+  const pathnames = Object.entries(cachedRoutes)
+    .flatMap(([pathname, route]) =>
+      route.ready && route.routerSnapshot ? [pathname] : []
+    )
+    .sort((a, b) => a.localeCompare(b));
 
   return (
-    <aside aria-label="Route cache status" className="inspector">
+    <aside aria-label="Workspace shelf" className="inspector">
       <div>
-        <p className="eyebrow">Cache monitor</p>
-        <h2>{pathnames.length} retained routes</h2>
+        <p className="eyebrow">Workspace shelf</p>
+        <h2>Saved pages</h2>
       </div>
 
       <div className="metric-grid">
         <StatusMetric
-          label="Returning"
-          value={activeNavigation?.pathname ?? "Idle"}
+          label="Opening"
+          value={
+            activeNavigation ? getPageLabel(activeNavigation.pathname) : "Ready"
+          }
         />
         <StatusMetric
-          label="Last restore"
+          label="Last return"
           value={
             lastCompletedNavigation
               ? `${Math.round(lastCompletedNavigation.duration)}ms`
-              : "Waiting"
+              : "None yet"
           }
         />
       </div>
 
       <div className="cache-list">
         {pathnames.length === 0 ? (
-          <p className="empty-state">Open a retained page to fill this list.</p>
+          <p className="empty-state">Open a saved page and it appears here.</p>
         ) : (
-          <ul aria-label="Retained route list">
+          <ul aria-label="Open workspace list">
             {pathnames.map((pathname) => (
               <li key={pathname}>
                 <button
@@ -43,8 +58,8 @@ export function CachePanel() {
                   onClick={() => destroy(pathname)}
                   type="button"
                 >
-                  <span>{pathname}</span>
-                  <span>Clear</span>
+                  <span>{getPageLabel(pathname)}</span>
+                  <span>Close</span>
                 </button>
               </li>
             ))}
@@ -55,10 +70,10 @@ export function CachePanel() {
       <button
         className="secondary-button"
         disabled={pathnames.length === 0}
-        onClick={destroyAll}
+        onClick={() => destroy(pathnames)}
         type="button"
       >
-        Clear retained pages
+        Close saved pages
       </button>
     </aside>
   );

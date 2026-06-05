@@ -1,28 +1,35 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import {
-  useRouteCacheActive,
-  useRouteCacheEffect,
-} from "tanstack-router-cache";
-import { ActiveBadge } from "../components/active-badge";
+import { useRouteCacheEffect } from "tanstack-router-cache";
 import { StatusMetric } from "../components/status-metric";
-import { HEALTH_MAX, PRODUCTS, type Product, SECOND_MS } from "../data";
+import { READINESS_MAX, SECOND_MS } from "../data";
+
+const routeApi = getRouteApi("/power/catalog");
+
+const claimTypeFilters = ["All", "Auto", "Home", "Injury"] as const;
+
+type ClaimTypeFilter = (typeof claimTypeFilters)[number];
+
+function isClaimTypeFilter(value: string): value is ClaimTypeFilter {
+  return claimTypeFilters.some((filter) => filter === value);
+}
 
 export function CatalogWorkspace() {
-  const isActive = useRouteCacheActive();
+  const repairNetwork = routeApi.useLoaderData();
   const [query, setQuery] = useState("");
-  const [segment, setSegment] = useState<Product["segment"] | "All">("All");
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [claimType, setClaimType] = useState<ClaimTypeFilter>("All");
+  const [shortlist, setShortlist] = useState<string[]>([]);
   const [visibleSeconds, setVisibleSeconds] = useState(0);
   const normalizedQuery = query.trim().toLowerCase();
-  const filteredProducts = PRODUCTS.filter((product) => {
-    const matchesSegment = segment === "All" || product.segment === segment;
+  const filteredPartners = repairNetwork.partners.filter((partner) => {
+    const matchesClaimType =
+      claimType === "All" || partner.claimType === claimType;
     const matchesQuery =
       normalizedQuery.length === 0 ||
-      product.name.toLowerCase().includes(normalizedQuery) ||
-      product.owner.toLowerCase().includes(normalizedQuery);
+      partner.name.toLowerCase().includes(normalizedQuery) ||
+      partner.city.toLowerCase().includes(normalizedQuery);
 
-    return matchesSegment && matchesQuery;
+    return matchesClaimType && matchesQuery;
   });
 
   useRouteCacheEffect(() => {
@@ -35,103 +42,115 @@ export function CatalogWorkspace() {
     };
   }, []);
 
-  const toggleFavorite = (productId: string) => {
-    setFavorites((current) =>
-      current.includes(productId)
-        ? current.filter((favoriteId) => favoriteId !== productId)
-        : [...current, productId]
+  const toggleShortlist = (partnerId: string) => {
+    setShortlist((current) =>
+      current.includes(partnerId)
+        ? current.filter((shortlistedId) => shortlistedId !== partnerId)
+        : [...current, partnerId]
     );
+  };
+
+  const handleClaimTypeChange = (value: string) => {
+    if (isClaimTypeFilter(value)) {
+      setClaimType(value);
+    }
   };
 
   return (
     <section className="page-stack catalog-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Retained route</p>
-          <h2>Catalog</h2>
+          <p className="eyebrow">Repair network</p>
+          <h2>The vendor shortlist stays ready.</h2>
           <p>
-            Filters, marked rows, and window position stay in place after route
-            changes.
+            Search, filter, shortlist a shop, scroll down, and return to the
+            same working view.
           </p>
         </div>
-        <ActiveBadge active={isActive} />
+        <span className="active-badge">Saved list</span>
       </header>
 
-      <section aria-label="Catalog filters" className="toolbar">
+      <section aria-label="Repair network filters" className="toolbar">
         <label>
           <span>Search</span>
           <input
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Try owner or product"
+            placeholder="Try city or shop"
             value={query}
           />
         </label>
         <label>
-          <span>Segment</span>
+          <span>Claim type</span>
           <select
-            onChange={(event) =>
-              setSegment(event.target.value as Product["segment"] | "All")
-            }
-            value={segment}
+            onChange={(event) => handleClaimTypeChange(event.target.value)}
+            value={claimType}
           >
-            <option>All</option>
-            <option>Growth</option>
-            <option>Retention</option>
-            <option>Launch</option>
+            {claimTypeFilters.map((filter) => (
+              <option key={filter}>{filter}</option>
+            ))}
           </select>
         </label>
-        <StatusMetric label="Visible time" value={`${visibleSeconds}s`} />
-        <StatusMetric label="Marked" value={String(favorites.length)} />
+        <StatusMetric label="Prepared" value={repairNetwork.preparedAt} />
+        <StatusMetric label="First wait" value={`${repairNetwork.delayMs}ms`} />
+        <StatusMetric label="On-screen time" value={`${visibleSeconds}s`} />
+        <StatusMetric label="Shortlist" value={String(shortlist.length)} />
       </section>
 
       <div className="product-grid">
-        {filteredProducts.map((product) => (
-          <article className="product-card" key={product.id}>
-            <div>
-              <p>{product.segment}</p>
-              <h3>{product.name}</h3>
-            </div>
-            <dl>
+        {filteredPartners.length === 0 ? (
+          <div className="empty-results">
+            No shops match this search. Try a nearby city or a different claim
+            type.
+          </div>
+        ) : (
+          filteredPartners.map((partner) => (
+            <article className="product-card" key={partner.id}>
               <div>
-                <dt>Owner</dt>
-                <dd>{product.owner}</dd>
+                <p>{partner.claimType}</p>
+                <h3>{partner.name}</h3>
               </div>
-              <div>
-                <dt>Pipeline</dt>
-                <dd>{product.revenue}</dd>
-              </div>
-            </dl>
-            <meter
-              aria-label={`Health ${product.health}%`}
-              className="health-meter"
-              max={HEALTH_MAX}
-              min={0}
-              value={product.health}
-            />
-            <button
-              className={
-                favorites.includes(product.id)
-                  ? "mark-button mark-button-active"
-                  : "mark-button"
-              }
-              onClick={() => toggleFavorite(product.id)}
-              type="button"
-            >
-              {favorites.includes(product.id) ? "Marked" : "Mark"}
-            </button>
-          </article>
-        ))}
+              <dl>
+                <div>
+                  <dt>City</dt>
+                  <dd>{partner.city}</dd>
+                </div>
+                <div>
+                  <dt>Estimate</dt>
+                  <dd>{partner.estimate}</dd>
+                </div>
+              </dl>
+              <meter
+                aria-label={`${partner.readiness}% ready`}
+                className="health-meter"
+                max={READINESS_MAX}
+                min={0}
+                value={partner.readiness}
+              />
+              <button
+                className={
+                  shortlist.includes(partner.id)
+                    ? "mark-button mark-button-active"
+                    : "mark-button"
+                }
+                onClick={() => toggleShortlist(partner.id)}
+                type="button"
+              >
+                {shortlist.includes(partner.id) ? "Shortlisted" : "Shortlist"}
+              </button>
+            </article>
+          ))
+        )}
       </div>
 
       <div className="scroll-marker">
         <p className="eyebrow">Scroll checkpoint</p>
-        <h3>Return here after visiting another route.</h3>
+        <h3>Return here after visiting another room.</h3>
         <div className="button-row">
           <Link className="primary-button" to="/power/draft">
-            Open draft
+            Open case plan
           </Link>
           <Link className="secondary-button" to="/power/regular">
-            Open normal route
+            Open fresh page
           </Link>
         </div>
       </div>

@@ -1,20 +1,18 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { useReducer } from "react";
 import {
-  useRouteCacheActive,
   useRouteCacheActivity,
   useRouteCacheEffect,
 } from "tanstack-router-cache";
-import { ActiveBadge } from "../components/active-badge";
 import { StatusMetric } from "../components/status-metric";
 import {
   ACTIVITY_LOG_LIMIT,
-  CUSTOMER_NOTES,
   createActivityEntry,
-  createSessionStamp,
   formatClock,
   SECOND_MS,
 } from "../data";
+
+const routeApi = getRouteApi("/power/draft");
 
 type DraftState = ReturnType<typeof createInitialDraftState>;
 
@@ -26,14 +24,18 @@ type DraftAction =
   | { type: "title"; value: string }
   | { type: "notes"; value: string };
 
-function createInitialDraftState() {
+function createInitialDraftState(
+  casePlan: ReturnType<(typeof routeApi)["useLoaderData"]>
+) {
   return {
-    activity: [createActivityEntry("Workspace opened")],
-    notes: CUSTOMER_NOTES.join("\n"),
-    owner: "Santiago",
-    priority: "This week",
-    stamp: createSessionStamp(),
-    title: "Renewal plan",
+    activity: [createActivityEntry("Plan opened")],
+    delayMs: casePlan.delayMs,
+    deskId: casePlan.deskId,
+    notes: casePlan.notes,
+    owner: casePlan.owner,
+    preparedAt: casePlan.preparedAt,
+    priority: casePlan.priority,
+    title: casePlan.title,
     visibleSeconds: 0,
   };
 }
@@ -64,10 +66,10 @@ function draftReducer(state: DraftState, action: DraftAction): DraftState {
 }
 
 export function DraftWorkspace() {
-  const isActive = useRouteCacheActive();
+  const casePlan = routeApi.useLoaderData();
   const [state, dispatch] = useReducer(
     draftReducer,
-    undefined,
+    casePlan,
     createInitialDraftState
   );
 
@@ -83,7 +85,7 @@ export function DraftWorkspace() {
 
   useRouteCacheActivity((active) => {
     dispatch({
-      label: `${formatClock()} ${active ? "restored" : "parked"}`,
+      label: `${formatClock()} ${active ? "back on screen" : "waiting nearby"}`,
       type: "activity",
     });
   });
@@ -92,20 +94,20 @@ export function DraftWorkspace() {
     <section className="page-stack">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Retained route</p>
-          <h2>Draft workspace</h2>
+          <p className="eyebrow">Case plan</p>
+          <h2>The working plan keeps its place.</h2>
           <p>
-            Leave this page with unfinished work, then come back to the same
-            form state.
+            Leave with an unfinished action list, then come back to the same
+            notes, priority, timer, and activity trail.
           </p>
         </div>
-        <ActiveBadge active={isActive} />
+        <span className="active-badge">Saved plan</span>
       </header>
 
       <div className="split-layout">
-        <section aria-label="Draft form" className="form-panel">
+        <section aria-label="Case plan form" className="form-panel">
           <label>
-            <span>Plan name</span>
+            <span>Plan</span>
             <input
               onChange={(event) =>
                 dispatch({ type: "title", value: event.target.value })
@@ -116,7 +118,7 @@ export function DraftWorkspace() {
 
           <div className="field-grid">
             <label>
-              <span>Owner</span>
+              <span>Adjuster</span>
               <input
                 onChange={(event) =>
                   dispatch({ type: "owner", value: event.target.value })
@@ -132,15 +134,15 @@ export function DraftWorkspace() {
                 }
                 value={state.priority}
               >
-                <option>This week</option>
-                <option>Next sprint</option>
-                <option>Quarter plan</option>
+                <option>Today</option>
+                <option>Tomorrow</option>
+                <option>Next review</option>
               </select>
             </label>
           </div>
 
           <label>
-            <span>Working notes</span>
+            <span>Action list</span>
             <textarea
               onChange={(event) =>
                 dispatch({ type: "notes", value: event.target.value })
@@ -151,13 +153,18 @@ export function DraftWorkspace() {
           </label>
         </section>
 
-        <aside aria-label="Draft summary" className="summary-panel">
-          <StatusMetric label="Workspace" value={state.stamp} />
+        <aside aria-label="Case plan summary" className="summary-panel">
+          <StatusMetric label="Prepared" value={state.preparedAt} />
+          <StatusMetric label="First wait" value={`${state.delayMs}ms`} />
+          <StatusMetric label="Desk id" value={state.deskId} />
           <StatusMetric
-            label="Visible time"
+            label="On-screen time"
             value={`${state.visibleSeconds}s`}
           />
-          <StatusMetric label="Characters" value={String(state.notes.length)} />
+          <StatusMetric
+            label="Note size"
+            value={`${state.notes.length} chars`}
+          />
           <div className="activity-list">
             {state.activity.map((item) => (
               <span key={item.id}>{item.label}</span>
@@ -165,10 +172,10 @@ export function DraftWorkspace() {
           </div>
           <div className="button-row">
             <Link className="primary-button" to="/power/catalog">
-              Open catalog
+              Open repair network
             </Link>
             <Link className="secondary-button" to="/power/regular">
-              Open normal route
+              Open fresh page
             </Link>
           </div>
         </aside>

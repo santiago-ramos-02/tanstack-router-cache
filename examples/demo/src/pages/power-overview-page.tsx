@@ -4,58 +4,59 @@ import { ValueCard } from "../components/value-card";
 export function PowerOverviewPage() {
   return (
     <section className="page-stack">
-      <div className="hero-panel">
+      <div className="advanced-hero">
         <div className="hero-copy">
-          <p className="eyebrow">Power-user flow</p>
-          <h2>Keep route views warm without moving page state globally.</h2>
+          <p className="eyebrow">Advanced workbench</p>
+          <h2>Stress-test a busy claim desk.</h2>
           <p>
-            Work in a draft, tune catalog filters, jump away, then return to the
-            exact page you left.
+            Use these rooms when a page has timers, filters, marked rows, long
+            notes, and a scroll position worth keeping.
           </p>
           <div className="button-row">
             <Link className="primary-button" to="/power/draft">
-              Open draft
+              Open case plan
             </Link>
             <Link className="secondary-button" to="/power/regular">
-              Compare reset
+              Open fresh page
             </Link>
           </div>
         </div>
-        <figure aria-label="Route retention map" className="route-map">
-          <div className="route-node route-node-active">
-            <span>Draft</span>
-            <strong>retained</strong>
-          </div>
-          <div className="route-line" />
-          <div className="route-node">
-            <span>Catalog</span>
-            <strong>retained</strong>
-          </div>
-          <div className="route-line route-line-muted" />
-          <div className="route-node route-node-muted">
-            <span>Normal</span>
-            <strong>reset</strong>
-          </div>
-        </figure>
+        <div className="lab-strip">
+          <span>Plan activity</span>
+          <span>Vendor filters</span>
+          <span>Scroll return</span>
+          <span>Manual close</span>
+        </div>
       </div>
 
       <div className="feature-grid">
         <ValueCard
-          heading="Long forms"
-          text="Draft text, choices, and timers remain in place after route changes."
+          heading="Case plan"
+          text="Long notes, selected priority, visible time, and return history."
           to="/power/draft"
         />
         <ValueCard
-          heading="Filtered lists"
-          text="Search terms, selected rows, and scroll position survive navigation."
+          heading="Repair network"
+          text="Search terms, claim type filters, shortlisted shops, and scroll."
           to="/power/catalog"
         />
         <ValueCard
-          heading="Control route"
-          text="A regular route shows the default reset behavior side by side."
+          heading="Fresh page"
+          text="A clean reset point for comparing heavy pages against normal ones."
           to="/power/regular"
         />
       </div>
+
+      <section className="demo-script">
+        <div>
+          <p className="eyebrow">Power checks</p>
+          <h3>Use the workspace shelf while you move around.</h3>
+        </div>
+        <p>
+          Open the case plan and repair network, then use the shelf at the
+          bottom to close one saved page or close every saved page at once.
+        </p>
+      </section>
     </section>
   );
 }
