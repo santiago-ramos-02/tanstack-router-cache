@@ -17,12 +17,3 @@ prepared time, desk id, and local state in place.
 bun install
 bun run dev
 ```
-
-## Vercel
-
-The Vercel project config lives at the package root in `../../vercel.json`.
-Import the Git repository in Vercel with `packages/tanstack-router-cache` as the
-project root when deploying from the parent monorepo. The config installs this
-demo folder, builds it, and serves `examples/demo/dist`.
-
-Deploy this example after the `tanstack-router-cache` version in `package.json` has been published to npm.

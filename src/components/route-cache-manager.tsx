@@ -583,45 +583,16 @@ function restoreCachedHref(router: ReturnType<typeof useRouter>, href: string) {
     .catch(() => undefined);
 }
 
-function isAncestorPathname(ancestorPathname: string, pathname: string) {
-  if (ancestorPathname === pathname) {
-    return false;
-  }
-
-  if (ancestorPathname === "/") {
-    return pathname.startsWith("/");
-  }
-
-  return pathname.startsWith(`${ancestorPathname}/`);
-}
-
-function getShouldRenderLiveOutlet({
-  cachedRoutes,
-  bypassCachedPathname,
-  visiblePathname,
-}: {
-  cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"];
-  bypassCachedPathname?: string;
-  visiblePathname: string;
-}) {
-  if (visiblePathname === bypassCachedPathname) {
-    return true;
-  }
-
-  const visibleRoute = cachedRoutes[visiblePathname];
-  return !isReadyCachedRoute(visibleRoute);
-}
-
 function renderCachedRoute({
   bypassCachedPathname,
   pathname,
   route,
-  visiblePathname,
+  routerPathname,
 }: {
   bypassCachedPathname?: string;
   pathname: string;
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
-  visiblePathname: string;
+  routerPathname: string;
 }) {
   if (pathname === bypassCachedPathname) {
     return null;
@@ -642,7 +613,7 @@ function renderCachedRoute({
   return (
     <OffScreen
       key={pathname}
-      mode={visiblePathname === pathname ? "visible" : "hidden"}
+      mode={routerPathname === pathname ? "visible" : "hidden"}
       pathname={pathname}
     >
       {content}
@@ -652,15 +623,12 @@ function renderCachedRoute({
 
 function buildRouteCacheModes(
   cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"],
-  visiblePathname: string
+  routerPathname: string
 ) {
   const nextModes = new Map<string, ActivityMode>();
 
   for (const pathname of Object.keys(cachedRoutes)) {
-    nextModes.set(
-      pathname,
-      visiblePathname === pathname ? "visible" : "hidden"
-    );
+    nextModes.set(pathname, routerPathname === pathname ? "visible" : "hidden");
   }
 
   return nextModes;
@@ -670,11 +638,11 @@ function syncCachedRouteActivityEvents(params: {
   cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"];
   eventListener: ReturnType<typeof useEventListener>["eventListener"];
   previousRouteCacheModes: Map<string, ActivityMode>;
-  visiblePathname: string;
+  routerPathname: string;
 }) {
   const nextModes = buildRouteCacheModes(
     params.cachedRoutes,
-    params.visiblePathname
+    params.routerPathname
   );
 
   for (const [pathname, mode] of nextModes) {
@@ -743,12 +711,6 @@ function RouteCacheManager() {
     routerResolvedLocation?.pathname ?? routerPathname
   );
   const destinationRoute = cachedRoutes[routerPathname];
-  const visiblePathname =
-    routerPathname !== resolvedPathname &&
-    (isReadyCachedRoute(destinationRoute) ||
-      isAncestorPathname(routerPathname, resolvedPathname))
-      ? routerPathname
-      : resolvedPathname;
 
   const matches = useMatches();
   const childMatches = useChildMatches();
@@ -838,11 +800,7 @@ function RouteCacheManager() {
     const lastVisitedPathname = previousPathnameRef.current;
     const pendingNavigation = pendingCachedNavigationRef.current;
 
-    if (
-      pendingNavigation &&
-      pendingNavigation.pathname !== routerPathname &&
-      visiblePathname !== pendingNavigation.pathname
-    ) {
+    if (pendingNavigation && pendingNavigation.pathname !== routerPathname) {
       eventListener.emit("cachedNavigationCancel", pendingNavigation);
       pendingCachedNavigationRef.current = null;
     }
@@ -866,7 +824,7 @@ function RouteCacheManager() {
 
     pendingCachedNavigationRef.current = nextNavigation;
     eventListener.emit("cachedNavigationStart", nextNavigation);
-  }, [destinationRoute, eventListener, routerPathname, visiblePathname]);
+  }, [destinationRoute, eventListener, routerPathname]);
 
   useLayoutEffect(() => {
     previousRouteCacheModesRef.current ??= new Map();
@@ -875,27 +833,27 @@ function RouteCacheManager() {
       cachedRoutes,
       eventListener,
       previousRouteCacheModes: previousRouteCacheModesRef.current,
-      visiblePathname,
+      routerPathname,
     });
-  }, [cachedRoutes, eventListener, visiblePathname]);
+  }, [cachedRoutes, eventListener, routerPathname]);
 
   useLayoutEffect(() => {
     if (
-      previousVisiblePathnameRef.current === visiblePathname ||
-      !cachedRoutes[visiblePathname]
+      previousVisiblePathnameRef.current === routerPathname ||
+      !cachedRoutes[routerPathname]
     ) {
-      previousVisiblePathnameRef.current = visiblePathname;
+      previousVisiblePathnameRef.current = routerPathname;
       return;
     }
 
-    previousVisiblePathnameRef.current = visiblePathname;
-    touchCachedRoutes([visiblePathname]);
-  }, [cachedRoutes, touchCachedRoutes, visiblePathname]);
+    previousVisiblePathnameRef.current = routerPathname;
+    touchCachedRoutes([routerPathname]);
+  }, [cachedRoutes, touchCachedRoutes, routerPathname]);
 
   useEffect(() => {
     const pendingNavigation = pendingCachedNavigationRef.current;
 
-    if (visiblePathname !== pendingNavigation?.pathname) {
+    if (routerPathname !== pendingNavigation?.pathname) {
       return;
     }
 
@@ -929,7 +887,7 @@ function RouteCacheManager() {
       globalThis.cancelAnimationFrame(firstFrameId);
       globalThis.cancelAnimationFrame(secondFrameId);
     };
-  }, [eventListener, visiblePathname]);
+  }, [eventListener, routerPathname]);
 
   useLayoutEffect(() => {
     if (!(shouldRestoreDestinationHref && destinationRoute?.href)) {
@@ -944,13 +902,11 @@ function RouteCacheManager() {
     previousHrefRef.current = routerHref;
   }, [routerHref, routerPathname]);
 
-  const shouldRenderLiveOutlet = getShouldRenderLiveOutlet({
-    cachedRoutes,
-    bypassCachedPathname,
-    visiblePathname,
-  });
+  const shouldRenderLiveOutlet =
+    routerPathname === bypassCachedPathname ||
+    !isReadyCachedRoute(destinationRoute);
 
-  useRouterCacheDebug(cachedRoutes, visiblePathname);
+  useRouterCacheDebug(cachedRoutes, routerPathname);
 
   return (
     <>
@@ -959,7 +915,7 @@ function RouteCacheManager() {
           bypassCachedPathname,
           pathname,
           route,
-          visiblePathname,
+          routerPathname,
         })
       )}
       {shouldRenderLiveOutlet ? (
