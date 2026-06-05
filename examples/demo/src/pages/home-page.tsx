@@ -93,7 +93,7 @@ export function HomePage() {
             The inbox starts fresh. This claim keeps the note, selected status,
             checkbox, and scroll position ready for the customer call.
           </p>
-          <Link className="text-link" to="/power">
+          <Link className="text-link" to="/advanced">
             Open advanced workbench
           </Link>
         </aside>
@@ -108,7 +108,7 @@ export function HomePage() {
           <span>Scratch note</span>
           <p>Use the reset page to see how a regular screen behaves.</p>
         </Link>
-        <Link className="value-card" to="/power/catalog">
+        <Link className="value-card" to="/advanced/catalog">
           <span>Repair network</span>
           <p>
             Filter and shortlist vendors, then leave without losing context.

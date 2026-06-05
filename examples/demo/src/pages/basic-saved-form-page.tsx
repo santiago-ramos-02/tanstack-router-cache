@@ -51,7 +51,7 @@ export function BasicSavedFormPage() {
           <Link className="primary-button" to="/basic/regular-form">
             Open scratch note
           </Link>
-          <Link className="secondary-button" to="/power">
+          <Link className="secondary-button" to="/advanced">
             Open advanced workbench
           </Link>
         </div>

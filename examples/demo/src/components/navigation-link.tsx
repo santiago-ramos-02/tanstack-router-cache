@@ -2,13 +2,15 @@ import { Link } from "@tanstack/react-router";
 
 type DemoRoute =
   | "/"
+  | "/advanced"
+  | "/advanced/catalog"
+  | "/advanced/draft"
+  | "/advanced/regular"
   | "/basic"
   | "/basic/saved-form"
-  | "/basic/regular-form"
-  | "/power"
-  | "/power/draft"
-  | "/power/catalog"
-  | "/power/regular";
+  | "/basic/regular-form";
+
+const parentRoutes = new Set<DemoRoute>(["/advanced", "/basic"]);
 
 export function NavigationLink({
   label,
@@ -16,7 +18,7 @@ export function NavigationLink({
 }: Readonly<{ label: string; to: DemoRoute }>) {
   return (
     <Link
-      activeOptions={{ exact: true }}
+      activeOptions={{ exact: !parentRoutes.has(to) }}
       activeProps={{ "data-active": "true" }}
       className="nav-link"
       to={to}

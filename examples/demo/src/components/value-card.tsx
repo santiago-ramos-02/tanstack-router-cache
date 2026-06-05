@@ -11,10 +11,10 @@ export function ValueCard({
     | "/basic"
     | "/basic/saved-form"
     | "/basic/regular-form"
-    | "/power"
-    | "/power/draft"
-    | "/power/catalog"
-    | "/power/regular";
+    | "/advanced"
+    | "/advanced/draft"
+    | "/advanced/catalog"
+    | "/advanced/regular";
 }>) {
   return (
     <Link className="value-card" to={to}>

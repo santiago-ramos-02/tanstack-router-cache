@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ValueCard } from "../components/value-card";
 
-export function PowerOverviewPage() {
+export function AdvancedOverviewPage() {
   return (
     <section className="page-stack">
       <div className="advanced-hero">
@@ -13,10 +13,10 @@ export function PowerOverviewPage() {
             notes, and a scroll position worth keeping.
           </p>
           <div className="button-row">
-            <Link className="primary-button" to="/power/draft">
+            <Link className="primary-button" to="/advanced/draft">
               Open case plan
             </Link>
-            <Link className="secondary-button" to="/power/regular">
+            <Link className="secondary-button" to="/advanced/regular">
               Open fresh page
             </Link>
           </div>
@@ -33,23 +33,23 @@ export function PowerOverviewPage() {
         <ValueCard
           heading="Case plan"
           text="Long notes, selected priority, visible time, and return history."
-          to="/power/draft"
+          to="/advanced/draft"
         />
         <ValueCard
           heading="Repair network"
           text="Search terms, claim type filters, shortlisted shops, and scroll."
-          to="/power/catalog"
+          to="/advanced/catalog"
         />
         <ValueCard
           heading="Fresh page"
           text="A clean reset point for comparing heavy pages against normal ones."
-          to="/power/regular"
+          to="/advanced/regular"
         />
       </div>
 
       <section className="demo-script">
         <div>
-          <p className="eyebrow">Power checks</p>
+          <p className="eyebrow">Advanced checks</p>
           <h3>Use the workspace shelf while you move around.</h3>
         </div>
         <p>

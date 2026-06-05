@@ -4,7 +4,7 @@ import { useRouteCacheEffect } from "tanstack-router-cache";
 import { StatusMetric } from "../components/status-metric";
 import { READINESS_MAX, SECOND_MS } from "../data";
 
-const routeApi = getRouteApi("/power/catalog");
+const routeApi = getRouteApi("/advanced/catalog");
 
 const claimTypeFilters = ["All", "Auto", "Home", "Injury"] as const;
 
@@ -146,10 +146,10 @@ export function CatalogWorkspace() {
         <p className="eyebrow">Scroll checkpoint</p>
         <h3>Return here after visiting another room.</h3>
         <div className="button-row">
-          <Link className="primary-button" to="/power/draft">
+          <Link className="primary-button" to="/advanced/draft">
             Open case plan
           </Link>
-          <Link className="secondary-button" to="/power/regular">
+          <Link className="secondary-button" to="/advanced/regular">
             Open fresh page
           </Link>
         </div>

@@ -3,9 +3,9 @@ import { StatusMetric } from "./status-metric";
 
 const pageLabels: Record<string, string> = {
   "/": "Live case",
+  "/advanced/catalog": "Repair network",
+  "/advanced/draft": "Case plan",
   "/basic/saved-form": "Saved claim",
-  "/power/catalog": "Repair network",
-  "/power/draft": "Case plan",
 };
 
 function getPageLabel(pathname: string) {

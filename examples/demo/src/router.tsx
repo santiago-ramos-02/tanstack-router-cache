@@ -5,13 +5,13 @@ import {
 } from "@tanstack/react-router";
 import { AppShell } from "./app-shell";
 import { RoutePendingPage } from "./components/route-pending-page";
+import { AdvancedOverviewPage } from "./pages/advanced-overview-page";
 import { BasicOverviewPage } from "./pages/basic-overview-page";
 import { BasicRegularFormPage } from "./pages/basic-regular-form-page";
 import { BasicSavedFormPage } from "./pages/basic-saved-form-page";
 import { CatalogWorkspace } from "./pages/catalog-workspace";
 import { DraftWorkspace } from "./pages/draft-workspace";
 import { HomePage } from "./pages/home-page";
-import { PowerOverviewPage } from "./pages/power-overview-page";
 import { RegularWorkspace } from "./pages/regular-workspace";
 import {
   getCasePlan,
@@ -94,15 +94,15 @@ const basicRegularFormRoute = createRoute({
   component: BasicRegularFormPage,
 });
 
-const powerOverviewRoute = createRoute({
+const advancedOverviewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/power",
-  component: PowerOverviewPage,
+  path: "/advanced",
+  component: AdvancedOverviewPage,
 });
 
 const draftRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/power/draft",
+  path: "/advanced/draft",
   loader: ({ abortController }) => getCasePlan(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
@@ -121,7 +121,7 @@ const draftRoute = createRoute({
 
 const catalogRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/power/catalog",
+  path: "/advanced/catalog",
   loader: ({ abortController }) => getRepairNetwork(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
@@ -140,7 +140,7 @@ const catalogRoute = createRoute({
 
 const regularRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/power/regular",
+  path: "/advanced/regular",
   gcTime: resetRouteGcTime,
   loader: {
     handler: ({ abortController }) => getFreshWorkspace(abortController.signal),
@@ -162,7 +162,7 @@ const routeTree = rootRoute.addChildren([
   basicOverviewRoute,
   basicSavedFormRoute,
   basicRegularFormRoute,
-  powerOverviewRoute,
+  advancedOverviewRoute,
   draftRoute,
   catalogRoute,
   regularRoute,

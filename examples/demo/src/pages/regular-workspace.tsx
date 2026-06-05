@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { StatusMetric } from "../components/status-metric";
 import { SECOND_MS } from "../data";
 
-const routeApi = getRouteApi("/power/regular");
+const routeApi = getRouteApi("/advanced/regular");
 
 export function RegularWorkspace() {
   const freshWorkspace = routeApi.useLoaderData();
@@ -62,10 +62,10 @@ export function RegularWorkspace() {
           />
         </label>
         <div className="button-row">
-          <Link className="primary-button" to="/power/draft">
+          <Link className="primary-button" to="/advanced/draft">
             Open case plan
           </Link>
-          <Link className="secondary-button" to="/power/catalog">
+          <Link className="secondary-button" to="/advanced/catalog">
             Open repair network
           </Link>
         </div>

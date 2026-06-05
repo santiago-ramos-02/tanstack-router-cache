@@ -44,7 +44,7 @@ export function BasicRegularFormPage() {
           <Link className="primary-button" to="/basic/saved-form">
             Return to saved claim
           </Link>
-          <Link className="secondary-button" to="/power/regular">
+          <Link className="secondary-button" to="/advanced/regular">
             Open fresh page
           </Link>
         </div>

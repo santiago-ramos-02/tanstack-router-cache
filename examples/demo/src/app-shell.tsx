@@ -14,15 +14,46 @@ export function AppShell() {
             <p className="eyebrow">tanstack-router-cache</p>
             <h1>Keep a busy page alive.</h1>
           </div>
-          <nav aria-label="Demo areas" className="nav-list">
-            <NavigationLink label="Live case" to="/" />
-            <NavigationLink label="Guided demo" to="/basic" />
-            <NavigationLink label="Saved claim" to="/basic/saved-form" />
-            <NavigationLink label="Scratch note" to="/basic/regular-form" />
-            <NavigationLink label="Advanced" to="/power" />
-            <NavigationLink label="Case plan" to="/power/draft" />
-            <NavigationLink label="Repair network" to="/power/catalog" />
-            <NavigationLink label="Fresh page" to="/power/regular" />
+          <nav aria-label="Demo areas">
+            <ul className="nav-list">
+              <li>
+                <NavigationLink label="Live case" to="/" />
+              </li>
+              <li className="nav-group">
+                <NavigationLink label="Guided demo" to="/basic" />
+                <ul className="nav-children">
+                  <li>
+                    <NavigationLink
+                      label="Saved claim"
+                      to="/basic/saved-form"
+                    />
+                  </li>
+                  <li>
+                    <NavigationLink
+                      label="Scratch note"
+                      to="/basic/regular-form"
+                    />
+                  </li>
+                </ul>
+              </li>
+              <li className="nav-group">
+                <NavigationLink label="Advanced" to="/advanced" />
+                <ul className="nav-children">
+                  <li>
+                    <NavigationLink label="Case plan" to="/advanced/draft" />
+                  </li>
+                  <li>
+                    <NavigationLink
+                      label="Repair network"
+                      to="/advanced/catalog"
+                    />
+                  </li>
+                  <li>
+                    <NavigationLink label="Fresh page" to="/advanced/regular" />
+                  </li>
+                </ul>
+              </li>
+            </ul>
           </nav>
         </header>
         <main className="route-surface" id="main-content">

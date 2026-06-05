@@ -29,7 +29,7 @@ export function BasicOverviewPage() {
         <ValueCard
           heading="Advanced workbench"
           text="Move on when you want timers, filters, marked rows, and cleanup."
-          to="/power"
+          to="/advanced"
         />
       </div>
 

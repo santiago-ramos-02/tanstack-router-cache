@@ -12,7 +12,7 @@ import {
   SECOND_MS,
 } from "../data";
 
-const routeApi = getRouteApi("/power/draft");
+const routeApi = getRouteApi("/advanced/draft");
 
 type DraftState = ReturnType<typeof createInitialDraftState>;
 
@@ -171,10 +171,10 @@ export function DraftWorkspace() {
             ))}
           </div>
           <div className="button-row">
-            <Link className="primary-button" to="/power/catalog">
+            <Link className="primary-button" to="/advanced/catalog">
               Open repair network
             </Link>
-            <Link className="secondary-button" to="/power/regular">
+            <Link className="secondary-button" to="/advanced/regular">
               Open fresh page
             </Link>
           </div>
