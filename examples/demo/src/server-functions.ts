@@ -27,10 +27,16 @@ function formatPreparedAt() {
   return timeFormatter.format(new Date());
 }
 
+function getAbortReason(signal: AbortSignal) {
+  return (
+    signal.reason ?? new DOMException("The operation was aborted.", "AbortError")
+  );
+}
+
 function waitForDemoDelay(delayMs: number, signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
-      reject(signal.reason);
+      reject(getAbortReason(signal));
       return;
     }
 
@@ -42,7 +48,10 @@ function waitForDemoDelay(delayMs: number, signal?: AbortSignal) {
     const handleAbort = () => {
       globalThis.clearTimeout(timeoutId);
       signal?.removeEventListener("abort", handleAbort);
-      reject(signal?.reason);
+
+      if (signal) {
+        reject(getAbortReason(signal));
+      }
     };
 
     signal?.addEventListener("abort", handleAbort, { once: true });
