@@ -1,10 +1,10 @@
-export type RepairPartner = {
+type DemoRecord = {
   id: string;
   name: string;
-  claimType: "Auto" | "Home" | "Injury";
-  city: string;
-  estimate: string;
-  readiness: number;
+  category: "Form" | "List" | "Detail";
+  group: string;
+  metric: string;
+  progress: number;
 };
 
 export type ActivityEntry = {
@@ -12,118 +12,118 @@ export type ActivityEntry = {
   label: string;
 };
 
-export const REPAIR_PARTNERS: RepairPartner[] = [
+export const DEMO_RECORDS = [
   {
-    id: "p-001",
-    name: "Oak Street Collision",
-    claimType: "Auto",
-    city: "Chicago",
-    estimate: "$2,840",
-    readiness: 92,
+    id: "record-001",
+    name: "Sample item 01",
+    category: "Form",
+    group: "Group A",
+    metric: "92ms",
+    progress: 92,
   },
   {
-    id: "p-002",
-    name: "Riverbend Roofing",
-    claimType: "Home",
-    city: "Madison",
-    estimate: "$7,430",
-    readiness: 76,
+    id: "record-002",
+    name: "Sample item 02",
+    category: "List",
+    group: "Group A",
+    metric: "76ms",
+    progress: 76,
   },
   {
-    id: "p-003",
-    name: "ClearPath Physical Therapy",
-    claimType: "Injury",
-    city: "Milwaukee",
-    estimate: "$1,180",
-    readiness: 88,
+    id: "record-003",
+    name: "Sample item 03",
+    category: "Detail",
+    group: "Group B",
+    metric: "88ms",
+    progress: 88,
   },
   {
-    id: "p-004",
-    name: "North Loop Glass",
-    claimType: "Auto",
-    city: "Minneapolis",
-    estimate: "$640",
-    readiness: 69,
+    id: "record-004",
+    name: "Sample item 04",
+    category: "Form",
+    group: "Group B",
+    metric: "69ms",
+    progress: 69,
   },
   {
-    id: "p-005",
-    name: "Pinecrest Drywall",
-    claimType: "Home",
-    city: "Des Moines",
-    estimate: "$3,210",
-    readiness: 81,
+    id: "record-005",
+    name: "Sample item 05",
+    category: "List",
+    group: "Group C",
+    metric: "81ms",
+    progress: 81,
   },
   {
-    id: "p-006",
-    name: "Summit Rehab Network",
-    claimType: "Injury",
-    city: "Cleveland",
-    estimate: "$2,360",
-    readiness: 73,
+    id: "record-006",
+    name: "Sample item 06",
+    category: "Detail",
+    group: "Group C",
+    metric: "73ms",
+    progress: 73,
   },
   {
-    id: "p-007",
-    name: "Harbor Auto Body",
-    claimType: "Auto",
-    city: "Detroit",
-    estimate: "$4,190",
-    readiness: 95,
+    id: "record-007",
+    name: "Sample item 07",
+    category: "Form",
+    group: "Group D",
+    metric: "95ms",
+    progress: 95,
   },
   {
-    id: "p-008",
-    name: "Evergreen Restoration",
-    claimType: "Home",
-    city: "Toledo",
-    estimate: "$8,720",
-    readiness: 58,
+    id: "record-008",
+    name: "Sample item 08",
+    category: "List",
+    group: "Group D",
+    metric: "58ms",
+    progress: 58,
   },
   {
-    id: "p-009",
-    name: "Lakeside Imaging",
-    claimType: "Injury",
-    city: "Grand Rapids",
-    estimate: "$910",
-    readiness: 71,
+    id: "record-009",
+    name: "Sample item 09",
+    category: "Detail",
+    group: "Group E",
+    metric: "71ms",
+    progress: 71,
   },
   {
-    id: "p-010",
-    name: "Atlas Tow Service",
-    claimType: "Auto",
-    city: "Indianapolis",
-    estimate: "$520",
-    readiness: 90,
+    id: "record-010",
+    name: "Sample item 10",
+    category: "Form",
+    group: "Group E",
+    metric: "90ms",
+    progress: 90,
   },
   {
-    id: "p-011",
-    name: "Cedar Ridge Contractors",
-    claimType: "Home",
-    city: "Cincinnati",
-    estimate: "$5,980",
-    readiness: 66,
+    id: "record-011",
+    name: "Sample item 11",
+    category: "List",
+    group: "Group F",
+    metric: "66ms",
+    progress: 66,
   },
   {
-    id: "p-012",
-    name: "Metro Care Clinic",
-    claimType: "Injury",
-    city: "St. Louis",
-    estimate: "$1,640",
-    readiness: 79,
+    id: "record-012",
+    name: "Sample item 12",
+    category: "Detail",
+    group: "Group F",
+    metric: "79ms",
+    progress: 79,
   },
-];
+] satisfies DemoRecord[];
 
-export const CUSTOMER_NOTES = [
-  "Customer uploaded hallway photos",
-  "Water mitigation visit booked for Thursday",
-  "Temporary housing approved through June 18",
-  "Roof report still needs the contractor signature",
-  "Payment hold clears after the recorded statement",
-  "Send final repair choice to the customer by 3 PM",
+export const DEMO_DRAFT_LINES = [
+  "First line stays in the cached textarea",
+  "Second line remains after visiting another route",
+  "Selected priority stays with the draft",
+  "The timer pauses while the page is cached",
+  "Activity entries show route cache visibility",
+  "Manual close removes the saved page",
 ];
 
 export const SECOND_MS = 1000;
 export const ACTIVITY_LOG_LIMIT = 5;
 export const ACTIVITY_ID_INCREMENT = 1;
-export const READINESS_MAX = 100;
+export const PROGRESS_MAX = 100;
 
 const clockFormatter = new Intl.DateTimeFormat("en", {
   hour: "2-digit",

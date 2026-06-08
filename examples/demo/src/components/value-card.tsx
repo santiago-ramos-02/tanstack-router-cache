@@ -9,12 +9,12 @@ export function ValueCard({
   text: string;
   to:
     | "/basic"
-    | "/basic/saved-form"
-    | "/basic/regular-form"
+    | "/basic/cached-form"
+    | "/basic/reset-form"
     | "/advanced"
     | "/advanced/draft"
-    | "/advanced/catalog"
-    | "/advanced/regular";
+    | "/advanced/list"
+    | "/advanced/reset";
 }>) {
   return (
     <Link className="value-card" to={to}>

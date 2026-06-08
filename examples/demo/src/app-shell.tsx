@@ -7,7 +7,7 @@ export function AppShell() {
     <RouterCacheProvider maxEntries={6} maxEntriesPerRouteId={2}>
       <div className="app-shell">
         <a className="skip-link" href="#main-content">
-          Skip to case
+          Skip to content
         </a>
         <header className="top-bar">
           <div className="brand-block">
@@ -20,43 +20,42 @@ export function AppShell() {
                 width="34"
               />
               <div className="brand-copy">
-                <p className="brand-name">ClaimDesk Live</p>
-                <p className="eyebrow">Northline Mutual</p>
+                <p className="brand-name">tanstack-router-cache</p>
               </div>
             </div>
           </div>
           <nav aria-label="Demo areas">
             <ul className="nav-list">
               <li>
-                <NavigationLink label="Live case" to="/" />
+                <NavigationLink label="Saved page" to="/" />
               </li>
               <li className="nav-group">
                 <span className="nav-label">Compare</span>
                 <ul className="nav-children">
                   <li>
                     <NavigationLink
-                      label="Saved claim"
-                      to="/basic/saved-form"
+                      label="Cached form"
+                      to="/basic/cached-form"
                     />
                   </li>
                   <li>
                     <NavigationLink
-                      label="Scratch note"
-                      to="/basic/regular-form"
+                      label="Reset form"
+                      to="/basic/reset-form"
                     />
                   </li>
                 </ul>
               </li>
               <li className="nav-group">
-                <span className="nav-label">Workbench</span>
+                <span className="nav-label">Advanced</span>
                 <ul className="nav-children">
                   <li>
-                    <NavigationLink label="Case plan" to="/advanced/draft" />
+                    <NavigationLink label="Saved draft" to="/advanced/draft" />
                   </li>
                   <li>
                     <NavigationLink
-                      label="Repair network"
-                      to="/advanced/catalog"
+                      label="Saved list"
+                      to="/advanced/list"
                     />
                   </li>
                 </ul>

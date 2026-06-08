@@ -1,11 +1,11 @@
-import { CUSTOMER_NOTES, REPAIR_PARTNERS } from "./data";
+import { DEMO_DRAFT_LINES, DEMO_RECORDS } from "./data";
 
-const LIVE_CASE_DELAY_MS = 1200;
-const SAVED_CLAIM_DELAY_MS = 1300;
-const SCRATCH_NOTE_DELAY_MS = 900;
-const CASE_PLAN_DELAY_MS = 1500;
-const REPAIR_NETWORK_DELAY_MS = 1600;
-const FRESH_PAGE_DELAY_MS = 1000;
+const SAVED_PAGE_DELAY_MS = 1200;
+const CACHED_FORM_DELAY_MS = 1300;
+const RESET_FORM_DELAY_MS = 900;
+const SAVED_DRAFT_DELAY_MS = 1500;
+const SAVED_LIST_DELAY_MS = 1600;
+const RESET_PAGE_DELAY_MS = 1000;
 
 const requestIdRadix = 36;
 const requestIdStart = 2;
@@ -16,7 +16,7 @@ const timeFormatter = new Intl.DateTimeFormat("en", {
   second: "2-digit",
 });
 
-function createDeskId(prefix: string) {
+function createLoadId(prefix: string) {
   return `${prefix}-${Math.random()
     .toString(requestIdRadix)
     .slice(requestIdStart, requestIdEnd)
@@ -27,7 +27,7 @@ function formatPreparedAt() {
   return timeFormatter.format(new Date());
 }
 
-function waitForDesk(delayMs: number, signal?: AbortSignal) {
+function waitForDemoDelay(delayMs: number, signal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
       reject(signal.reason);
@@ -49,74 +49,73 @@ function waitForDesk(delayMs: number, signal?: AbortSignal) {
   });
 }
 
-async function withDeskDelay(delayMs: number, signal?: AbortSignal) {
-  await waitForDesk(delayMs, signal);
+async function withDemoDelay(delayMs: number, signal?: AbortSignal) {
+  await waitForDemoDelay(delayMs, signal);
 
   return {
     delayMs,
-    deskId: createDeskId("desk"),
+    loadId: createLoadId("load"),
     preparedAt: formatPreparedAt(),
   };
 }
 
-export async function getLiveClaimFile(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(LIVE_CASE_DELAY_MS, signal);
+export async function getSavedPageDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(SAVED_PAGE_DELAY_MS, signal);
 
   return {
     ...receipt,
-    adjuster: "Maya Chen",
-    claimNote:
-      "Customer approved Oak Street Collision. Call before 3 PM if the windshield quote changes.",
-    claimNumber: "C-1842",
-    status: "Reviewing estimate",
+    label: "Saved page example",
+    note: "Edit this text, leave the page, and return to confirm it is still here.",
+    sampleId: "demo-001",
+    status: "Ready",
   };
 }
 
-export async function getSavedClaimFile(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(SAVED_CLAIM_DELAY_MS, signal);
+export async function getCachedFormDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(CACHED_FORM_DELAY_MS, signal);
 
   return {
     ...receipt,
-    claim: "C-1842 windshield claim",
-    notes: "Customer wants the first available morning appointment.",
+    notes: "This text is loaded once and kept while the page is cached.",
+    title: "Cached form value",
   };
 }
 
-export async function getScratchNotePad(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(SCRATCH_NOTE_DELAY_MS, signal);
+export async function getResetFormDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(RESET_FORM_DELAY_MS, signal);
 
   return {
     ...receipt,
-    title: "Temporary inbox note",
+    title: "Reset form value",
   };
 }
 
-export async function getCasePlan(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(CASE_PLAN_DELAY_MS, signal);
+export async function getSavedDraftDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(SAVED_DRAFT_DELAY_MS, signal);
 
   return {
     ...receipt,
-    notes: CUSTOMER_NOTES.join("\n"),
-    owner: "Maya Chen",
-    priority: "Today",
-    title: "Water damage follow-up",
+    notes: DEMO_DRAFT_LINES.join("\n"),
+    owner: "Example owner",
+    priority: "High",
+    title: "Saved draft example",
   };
 }
 
-export async function getRepairNetwork(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(REPAIR_NETWORK_DELAY_MS, signal);
+export async function getSavedListDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(SAVED_LIST_DELAY_MS, signal);
 
   return {
     ...receipt,
-    partners: REPAIR_PARTNERS,
+    records: DEMO_RECORDS,
   };
 }
 
-export async function getFreshWorkspace(signal?: AbortSignal) {
-  const receipt = await withDeskDelay(FRESH_PAGE_DELAY_MS, signal);
+export async function getResetPageDemo(signal?: AbortSignal) {
+  const receipt = await withDemoDelay(RESET_PAGE_DELAY_MS, signal);
 
   return {
     ...receipt,
-    headline: "Temporary note",
+    title: "Reset page example",
   };
 }

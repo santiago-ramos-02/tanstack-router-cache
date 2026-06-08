@@ -1,10 +1,10 @@
 import { useRouteCacheNavigation, useRouterCache } from "tanstack-router-cache";
 
 const pageLabels: Record<string, string> = {
-  "/": "Live case",
-  "/advanced/catalog": "Repair network",
-  "/advanced/draft": "Case plan",
-  "/basic/saved-form": "Saved claim",
+  "/": "Saved page",
+  "/advanced/list": "Saved list",
+  "/advanced/draft": "Saved draft",
+  "/basic/cached-form": "Cached form",
 };
 
 function getPageLabel(pathname: string) {
@@ -22,9 +22,9 @@ export function CachePanel() {
     .sort((a, b) => a.localeCompare(b));
 
   return (
-    <aside aria-label="Workspace shelf" className="inspector">
+    <aside aria-label="Saved page controls" className="inspector">
       <div>
-        <p className="eyebrow">Workspace shelf</p>
+        <p className="eyebrow">Route cache</p>
         <h2>Saved pages</h2>
       </div>
 
@@ -37,9 +37,9 @@ export function CachePanel() {
 
       <div className="cache-list">
         {pathnames.length === 0 ? (
-          <p className="empty-state">Open a saved page and it appears here.</p>
+          <p className="empty-state">Open a cached page and it appears here.</p>
         ) : (
-          <ul aria-label="Open workspace list">
+          <ul aria-label="Saved page list">
             {pathnames.map((pathname) => (
               <li key={pathname}>
                 <button

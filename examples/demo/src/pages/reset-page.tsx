@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 import { StatusMetric } from "../components/status-metric";
 import { SECOND_MS } from "../data";
 
-const routeApi = getRouteApi("/advanced/regular");
+const routeApi = getRouteApi("/advanced/reset");
 
-export function RegularWorkspace() {
-  const freshWorkspace = routeApi.useLoaderData();
-  const [headline, setHeadline] = useState(freshWorkspace.headline);
+export function ResetPage() {
+  const resetPage = routeApi.useLoaderData();
+  const [title, setTitle] = useState(resetPage.title);
   const [detail, setDetail] = useState("");
   const [seconds, setSeconds] = useState(0);
 
@@ -25,31 +25,31 @@ export function RegularWorkspace() {
     <section className="page-stack">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Fresh page</p>
-          <h2>This room starts over each time.</h2>
+          <p className="eyebrow">Reset page</p>
+          <h2>This page resets each time.</h2>
           <p>
-            Use this page as the control check when you want to compare a saved
-            workspace with a normal reset.
+            Use this page as the control check when you want to compare a
+            cached page with a normal reset.
           </p>
         </div>
-        <span className="active-badge muted">Starts fresh</span>
+        <span className="active-badge muted">Resets</span>
       </header>
 
-      <section aria-label="Fresh page form" className="form-panel compact-form">
+      <section aria-label="Reset page form" className="form-panel compact-form">
         <div className="metric-grid">
-          <StatusMetric label="Prepared" value={freshWorkspace.preparedAt} />
+          <StatusMetric label="Prepared" value={resetPage.preparedAt} />
           <StatusMetric
             label="First wait"
-            value={`${freshWorkspace.delayMs}ms`}
+            value={`${resetPage.delayMs}ms`}
           />
-          <StatusMetric label="Desk id" value={freshWorkspace.deskId} />
+          <StatusMetric label="Load id" value={resetPage.loadId} />
           <StatusMetric label="Open time" value={`${seconds}s`} />
         </div>
         <label>
-          <span>Headline</span>
+          <span>Title</span>
           <input
-            onChange={(event) => setHeadline(event.target.value)}
-            value={headline}
+            onChange={(event) => setTitle(event.target.value)}
+            value={title}
           />
         </label>
         <label>
@@ -63,10 +63,10 @@ export function RegularWorkspace() {
         </label>
         <div className="button-row">
           <Link className="primary-button" to="/advanced/draft">
-            Open case plan
+            Open saved draft
           </Link>
-          <Link className="secondary-button" to="/advanced/catalog">
-            Open repair network
+          <Link className="secondary-button" to="/advanced/list">
+            Open saved list
           </Link>
         </div>
       </section>

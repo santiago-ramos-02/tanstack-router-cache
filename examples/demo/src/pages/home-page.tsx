@@ -4,45 +4,34 @@ import { StatusMetric } from "../components/status-metric";
 
 const routeApi = getRouteApi("/");
 
-const routeCacheSnippet = [
-  "const liveCase = createRoute({",
-  '  path: "/",',
-  "  staticData: { routeCache: true },",
-  "  staleTime: Number.POSITIVE_INFINITY,",
-  "});",
-  "",
-  "const scratchNote = createRoute({",
-  '  path: "/basic/regular-form",',
-  "  gcTime: 0,",
-  '  loader: { staleReloadMode: "blocking" },',
-  "});",
-].join("\n");
-
 export function HomePage() {
-  const claimFile = routeApi.useLoaderData();
-  const [adjuster, setAdjuster] = useState(claimFile.adjuster);
-  const [status, setStatus] = useState(claimFile.status);
-  const [claimNote, setClaimNote] = useState(claimFile.claimNote);
-  const [sendCopy, setSendCopy] = useState(true);
+  const savedPage = routeApi.useLoaderData();
+  const [label, setLabel] = useState(savedPage.label);
+  const [status, setStatus] = useState(savedPage.status);
+  const [note, setNote] = useState(savedPage.note);
+  const [keepChecked, setKeepChecked] = useState(true);
 
   return (
-    <section className="page-stack live-case-page">
-      <div className="case-hero">
-        <section aria-label="Claim file" className="form-panel case-editor">
-          <header className="case-title">
+    <section className="page-stack">
+      <div className="demo-hero">
+        <section
+          aria-label="Saved page example"
+          className="form-panel demo-editor"
+        >
+          <header className="demo-title">
             <div>
-              <p className="eyebrow">Claim {claimFile.claimNumber}</p>
+              <p className="eyebrow">{savedPage.sampleId}</p>
               <h2>Edit. Leave. Return.</h2>
             </div>
-            <span className="active-badge">Live case</span>
+            <span className="active-badge">Cached page</span>
           </header>
 
           <div className="field-grid">
             <label>
-              <span>Adjuster</span>
+              <span>Label</span>
               <input
-                onChange={(event) => setAdjuster(event.target.value)}
-                value={adjuster}
+                onChange={(event) => setLabel(event.target.value)}
+                value={label}
               />
             </label>
             <label>
@@ -51,59 +40,53 @@ export function HomePage() {
                 onChange={(event) => setStatus(event.target.value)}
                 value={status}
               >
-                <option>Reviewing estimate</option>
-                <option>Waiting on photos</option>
-                <option>Repair scheduled</option>
-                <option>Payment ready</option>
+                <option>Ready</option>
+                <option>In review</option>
+                <option>Complete</option>
+                <option>Blocked</option>
               </select>
             </label>
           </div>
 
           <label>
-            <span>Customer note</span>
+            <span>Note</span>
             <textarea
-              onChange={(event) => setClaimNote(event.target.value)}
+              onChange={(event) => setNote(event.target.value)}
               rows={4}
-              value={claimNote}
+              value={note}
             />
           </label>
 
           <label className="checkbox-row">
             <input
-              checked={sendCopy}
-              onChange={(event) => setSendCopy(event.target.checked)}
+              checked={keepChecked}
+              onChange={(event) => setKeepChecked(event.target.checked)}
               type="checkbox"
             />
-            <span>Send the repair shop a copy</span>
+            <span>Keep this checkbox selected</span>
           </label>
 
           <div className="button-row">
-            <Link className="primary-button" to="/basic/regular-form">
-              Open the inbox
+            <Link className="primary-button" to="/basic/reset-form">
+              Open reset form
             </Link>
             <Link className="secondary-button" to="/basic">
-              Show the comparison
+              Show comparison
             </Link>
           </div>
         </section>
 
-        <aside aria-label="Demo checklist" className="case-brief">
-          <p className="eyebrow">Clip path</p>
-          <h3>Saved stays. Fresh resets.</h3>
+        <aside aria-label="Demo steps" className="demo-brief">
+          <p className="eyebrow">Demo steps</p>
+          <h3>State stays available.</h3>
           <ol className="step-list">
-            <li>Edit the note.</li>
-            <li>Open the inbox.</li>
+            <li>Edit a field.</li>
+            <li>Open the reset form.</li>
             <li>Return here.</li>
           </ol>
-          <StatusMetric label="Note size" value={`${claimNote.length} chars`} />
-          <details className="code-panel">
-            <summary>Code</summary>
-            <pre>
-              <code>{routeCacheSnippet}</code>
-            </pre>
-          </details>
+          <StatusMetric label="Text length" value={`${note.length} chars`} />
           <Link className="text-link" to="/advanced">
-            Advanced workbench
+            Advanced examples
           </Link>
         </aside>
       </div>

@@ -6,20 +6,20 @@ import {
 import { AppShell } from "./app-shell";
 import { RoutePendingPage } from "./components/route-pending-page";
 import { AdvancedOverviewPage } from "./pages/advanced-overview-page";
+import { BasicCachedFormPage } from "./pages/basic-cached-form-page";
 import { BasicOverviewPage } from "./pages/basic-overview-page";
-import { BasicRegularFormPage } from "./pages/basic-regular-form-page";
-import { BasicSavedFormPage } from "./pages/basic-saved-form-page";
-import { CatalogWorkspace } from "./pages/catalog-workspace";
-import { DraftWorkspace } from "./pages/draft-workspace";
+import { BasicResetFormPage } from "./pages/basic-reset-form-page";
 import { HomePage } from "./pages/home-page";
-import { RegularWorkspace } from "./pages/regular-workspace";
+import { ResetPage } from "./pages/reset-page";
+import { SavedDraftPage } from "./pages/saved-draft-page";
+import { SavedListPage } from "./pages/saved-list-page";
 import {
-  getCasePlan,
-  getFreshWorkspace,
-  getLiveClaimFile,
-  getRepairNetwork,
-  getSavedClaimFile,
-  getScratchNotePad,
+  getCachedFormDemo,
+  getResetFormDemo,
+  getResetPageDemo,
+  getSavedDraftDemo,
+  getSavedListDemo,
+  getSavedPageDemo,
 } from "./server-functions";
 
 const cachedRouteStaleTime = Number.POSITIVE_INFINITY;
@@ -34,11 +34,11 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  loader: ({ abortController }) => getLiveClaimFile(abortController.signal),
+  loader: ({ abortController }) => getSavedPageDemo(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
-      detail="The claim desk is preparing the latest customer note."
-      heading="Opening the live claim."
+      detail="The saved page example is loading before the page opens."
+      heading="Opening saved page."
     />
   ),
   pendingMinMs,
@@ -58,12 +58,12 @@ const basicOverviewRoute = createRoute({
 
 const basicSavedFormRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/basic/saved-form",
-  loader: ({ abortController }) => getSavedClaimFile(abortController.signal),
+  path: "/basic/cached-form",
+  loader: ({ abortController }) => getCachedFormDemo(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
-      detail="The customer file is loading before the page opens."
-      heading="Opening the saved claim."
+      detail="The cached form example is loading before the page opens."
+      heading="Opening cached form."
     />
   ),
   pendingMinMs,
@@ -72,26 +72,26 @@ const basicSavedFormRoute = createRoute({
     routeCache: true,
   },
   staleTime: cachedRouteStaleTime,
-  component: BasicSavedFormPage,
+  component: BasicCachedFormPage,
 });
 
 const basicRegularFormRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/basic/regular-form",
+  path: "/basic/reset-form",
   gcTime: resetRouteGcTime,
   loader: {
-    handler: ({ abortController }) => getScratchNotePad(abortController.signal),
+    handler: ({ abortController }) => getResetFormDemo(abortController.signal),
     staleReloadMode: "blocking",
   },
   pendingComponent: () => (
     <RoutePendingPage
-      detail="The inbox opens as a fresh workspace every time."
-      heading="Opening the inbox."
+      detail="The reset form loads as a new page each time."
+      heading="Opening reset form."
     />
   ),
   pendingMinMs,
   pendingMs,
-  component: BasicRegularFormPage,
+  component: BasicResetFormPage,
 });
 
 const advancedOverviewRoute = createRoute({
@@ -103,11 +103,11 @@ const advancedOverviewRoute = createRoute({
 const draftRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/advanced/draft",
-  loader: ({ abortController }) => getCasePlan(abortController.signal),
+  loader: ({ abortController }) => getSavedDraftDemo(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
-      detail="The action list is coming from the case desk."
-      heading="Opening the case plan."
+      detail="The saved draft example is loading before the page opens."
+      heading="Opening saved draft."
     />
   ),
   pendingMinMs,
@@ -116,17 +116,17 @@ const draftRoute = createRoute({
     routeCache: true,
   },
   staleTime: cachedRouteStaleTime,
-  component: DraftWorkspace,
+  component: SavedDraftPage,
 });
 
 const catalogRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/advanced/catalog",
-  loader: ({ abortController }) => getRepairNetwork(abortController.signal),
+  path: "/advanced/list",
+  loader: ({ abortController }) => getSavedListDemo(abortController.signal),
   pendingComponent: () => (
     <RoutePendingPage
-      detail="Repair partners are being gathered before the list opens."
-      heading="Opening the repair network."
+      detail="The saved list example is loading before the page opens."
+      heading="Opening saved list."
     />
   ),
   pendingMinMs,
@@ -135,26 +135,26 @@ const catalogRoute = createRoute({
     routeCache: true,
   },
   staleTime: cachedRouteStaleTime,
-  component: CatalogWorkspace,
+  component: SavedListPage,
 });
 
 const regularRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/advanced/regular",
+  path: "/advanced/reset",
   gcTime: resetRouteGcTime,
   loader: {
-    handler: ({ abortController }) => getFreshWorkspace(abortController.signal),
+    handler: ({ abortController }) => getResetPageDemo(abortController.signal),
     staleReloadMode: "blocking",
   },
   pendingComponent: () => (
     <RoutePendingPage
-      detail="A new desk is being prepared for this comparison page."
-      heading="Opening a fresh page."
+      detail="The reset page loads from a clean state for comparison."
+      heading="Opening reset page."
     />
   ),
   pendingMinMs,
   pendingMs,
-  component: RegularWorkspace,
+  component: ResetPage,
 });
 
 const routeTree = rootRoute.addChildren([

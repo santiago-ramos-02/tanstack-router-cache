@@ -3,12 +3,12 @@ import { Link } from "@tanstack/react-router";
 type DemoRoute =
   | "/"
   | "/advanced"
-  | "/advanced/catalog"
   | "/advanced/draft"
-  | "/advanced/regular"
+  | "/advanced/list"
+  | "/advanced/reset"
   | "/basic"
-  | "/basic/saved-form"
-  | "/basic/regular-form";
+  | "/basic/cached-form"
+  | "/basic/reset-form";
 
 const parentRoutes = new Set<DemoRoute>(["/advanced", "/basic"]);
 

@@ -25,17 +25,17 @@ type DraftAction =
   | { type: "notes"; value: string };
 
 function createInitialDraftState(
-  casePlan: ReturnType<(typeof routeApi)["useLoaderData"]>
+  savedDraft: ReturnType<(typeof routeApi)["useLoaderData"]>
 ) {
   return {
-    activity: [createActivityEntry("Plan opened")],
-    delayMs: casePlan.delayMs,
-    deskId: casePlan.deskId,
-    notes: casePlan.notes,
-    owner: casePlan.owner,
-    preparedAt: casePlan.preparedAt,
-    priority: casePlan.priority,
-    title: casePlan.title,
+    activity: [createActivityEntry("Draft opened")],
+    delayMs: savedDraft.delayMs,
+    loadId: savedDraft.loadId,
+    notes: savedDraft.notes,
+    owner: savedDraft.owner,
+    preparedAt: savedDraft.preparedAt,
+    priority: savedDraft.priority,
+    title: savedDraft.title,
     visibleSeconds: 0,
   };
 }
@@ -65,11 +65,11 @@ function draftReducer(state: DraftState, action: DraftAction): DraftState {
   }
 }
 
-export function DraftWorkspace() {
-  const casePlan = routeApi.useLoaderData();
+export function SavedDraftPage() {
+  const savedDraft = routeApi.useLoaderData();
   const [state, dispatch] = useReducer(
     draftReducer,
-    casePlan,
+    savedDraft,
     createInitialDraftState
   );
 
@@ -85,7 +85,7 @@ export function DraftWorkspace() {
 
   useRouteCacheActivity((active) => {
     dispatch({
-      label: `${formatClock()} ${active ? "back on screen" : "waiting nearby"}`,
+      label: `${formatClock()} ${active ? "visible" : "cached"}`,
       type: "activity",
     });
   });
@@ -94,20 +94,20 @@ export function DraftWorkspace() {
     <section className="page-stack">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Case plan</p>
-          <h2>The working plan keeps its place.</h2>
+          <p className="eyebrow">Saved draft</p>
+          <h2>The draft keeps its place.</h2>
           <p>
             Leave with an unfinished action list, then come back to the same
             notes, priority, timer, and activity trail.
           </p>
         </div>
-        <span className="active-badge">Saved plan</span>
+        <span className="active-badge">Saved page</span>
       </header>
 
       <div className="split-layout">
-        <section aria-label="Case plan form" className="form-panel">
+        <section aria-label="Saved draft form" className="form-panel">
           <label>
-            <span>Plan</span>
+            <span>Title</span>
             <input
               onChange={(event) =>
                 dispatch({ type: "title", value: event.target.value })
@@ -153,10 +153,10 @@ export function DraftWorkspace() {
           </label>
         </section>
 
-        <aside aria-label="Case plan summary" className="summary-panel">
+        <aside aria-label="Saved draft summary" className="summary-panel">
           <StatusMetric label="Prepared" value={state.preparedAt} />
           <StatusMetric label="First wait" value={`${state.delayMs}ms`} />
-          <StatusMetric label="Desk id" value={state.deskId} />
+          <StatusMetric label="Load id" value={state.loadId} />
           <StatusMetric
             label="On-screen time"
             value={`${state.visibleSeconds}s`}
@@ -171,11 +171,11 @@ export function DraftWorkspace() {
             ))}
           </div>
           <div className="button-row">
-            <Link className="primary-button" to="/advanced/catalog">
-              Open repair network
+            <Link className="primary-button" to="/advanced/list">
+              Open saved list
             </Link>
-            <Link className="secondary-button" to="/advanced/regular">
-              Open fresh page
+            <Link className="secondary-button" to="/advanced/reset">
+              Open reset page
             </Link>
           </div>
         </aside>

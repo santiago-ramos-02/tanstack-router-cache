@@ -1,10 +1,10 @@
 # Examples
 
-Use [demo](./demo). It is a deployable Vite app with a claim-desk scenario:
+Use [demo](./demo). It is a deployable Vite app with neutral route-cache examples:
 
-- Live case: a retained claim file that keeps form state after navigation.
-- Guided comparison: a saved claim beside a scratch note that resets.
-- Advanced workbench: retained forms, filtered lists, manual close controls,
+- Saved page: a retained route that keeps form state after navigation.
+- Guided comparison: a cached form beside a reset form.
+- Advanced examples: retained forms, filtered lists, manual close controls,
   lifecycle state, and window scroll restoration.
 
 The retained pages use TanStack Router loaders that call delayed demo server

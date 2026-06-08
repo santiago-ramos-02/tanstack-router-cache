@@ -1,7 +1,7 @@
 {
-  "name": "ClaimDesk Live",
-  "short_name": "ClaimDesk",
-  "description": "Interactive claims workspace demo for route view caching.",
+  "name": "tanstack-router-cache demo",
+  "short_name": "router-cache",
+  "description": "Interactive demo for tanstack-router-cache route view caching.",
   "icons": [
     {
       "src": "/logo.svg",
@@ -10,7 +10,7 @@
       "purpose": "any maskable"
     }
   ],
-  "theme_color": "#14312d",
-  "background_color": "#edf3f1",
+  "theme_color": "#111827",
+  "background_color": "#f6f8fb",
   "display": "standalone"
 }
