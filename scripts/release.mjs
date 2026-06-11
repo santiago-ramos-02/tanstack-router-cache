@@ -15,18 +15,14 @@ const publishRunLookupIntervalMs = 5000;
 const npmVersionLookupAttempts = 24;
 const npmVersionLookupIntervalMs = 5000;
 const sharedBufferBytes = 4;
-const command = process.argv[2];
+const requestedVersion = process.argv[2];
 
-if (command === "release") {
-  releaseVersion(process.argv[3]);
-} else if (command === "prepare") {
-  prepareRelease(process.argv[3]);
-} else if (command === "push") {
-  pushRelease();
-} else {
+if (!requestedVersion) {
   printUsage();
   process.exit(1);
 }
+
+releaseVersion(requestedVersion);
 
 function releaseVersion(versionSpec) {
   const release = prepareRelease(versionSpec);
@@ -58,7 +54,7 @@ function prepareRelease(versionSpec) {
   run("git", ["commit", "-m", `Release ${tagName}`]);
   run("git", ["tag", tagName]);
 
-  console.log(`Prepared ${tagName}. Run "bun run release:push" to publish.`);
+  console.log(`Prepared ${tagName}. Publishing release.`);
 
   return {
     packageName: packageJson.name,
@@ -67,16 +63,14 @@ function prepareRelease(versionSpec) {
   };
 }
 
-function pushRelease(release = readCurrentRelease()) {
+function pushRelease(release) {
   ensureMainBranch();
   ensureCleanTree();
 
   const { packageName, tagName, version } = release;
 
   if (!tagExists(tagName)) {
-    fail(
-      `${tagName} does not exist locally. Run "bun run release:prepare patch" first.`
-    );
+    fail(`${tagName} does not exist locally.`);
   }
 
   const headCommit = read("git", ["rev-parse", "HEAD"]);
@@ -157,17 +151,6 @@ function verifyNpmVersion(packageName, version) {
 
 function readPackageJson() {
   return JSON.parse(readFileSync("package.json", "utf8"));
-}
-
-function readCurrentRelease() {
-  const packageJson = readPackageJson();
-  const version = packageJson.version;
-
-  return {
-    packageName: packageJson.name,
-    tagName: `v${version}`,
-    version,
-  };
 }
 
 function writePackageJson(packageJson) {
@@ -348,10 +331,5 @@ function printUsage() {
   bun run release patch
   bun run release minor
   bun run release major
-  bun run release 0.2.0
-  bun run release:prepare patch
-  bun run release:prepare minor
-  bun run release:prepare major
-  bun run release:prepare 0.2.0
-  bun run release:push`);
+  bun run release 0.2.0`);
 }

@@ -46,13 +46,4 @@ bun run release 0.2.0
 
 `release` updates `package.json`, runs the package checks, commits the version bump, creates the matching tag, pushes `main` and the tag, creates the GitHub Release, waits for the publish workflow, and verifies that npm has the new package version.
 
-The lower-level commands are still available when you need to split the release into two steps:
-
-```sh
-bun run release:prepare patch
-bun run release:push
-```
-
-`release:prepare` updates `package.json`, runs the package checks, commits the version bump, and creates the matching tag locally. `release:push` pushes `main` and that exact tag, creates or updates the GitHub Release, waits for the publish workflow, and verifies that npm has the new package version.
-
 The workflow checks that the tag matches `package.json` before publishing, so a mismatched tag cannot publish accidentally.
