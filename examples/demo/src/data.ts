@@ -122,7 +122,7 @@ export const DEMO_DRAFT_LINES = [
 
 export const SECOND_MS = 1000;
 export const ACTIVITY_LOG_LIMIT = 5;
-export const ACTIVITY_ID_INCREMENT = 1;
+const ACTIVITY_ID_INCREMENT = 1;
 export const PROGRESS_MAX = 100;
 
 const clockFormatter = new Intl.DateTimeFormat("en", {

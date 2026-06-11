@@ -22,10 +22,7 @@ function parseHref(href: string) {
   }
 }
 
-export function isBareRouteHref(
-  href: string | undefined,
-  currentPathname: string
-) {
+function isBareRouteHref(href: string | undefined, currentPathname: string) {
   const candidateHref = href ?? currentPathname;
   const parsedHref = parseHref(candidateHref);
 

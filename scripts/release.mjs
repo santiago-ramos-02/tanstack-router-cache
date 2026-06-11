@@ -30,10 +30,7 @@ if (command === "release") {
 
 function releaseVersion(versionSpec) {
   const release = prepareRelease(versionSpec);
-  pushRelease();
-  createGitHubRelease(release.tagName);
-  watchPublishWorkflow(release.tagName);
-  verifyNpmVersion(release.packageName, release.version);
+  pushRelease(release);
 }
 
 function prepareRelease(versionSpec) {
@@ -70,12 +67,11 @@ function prepareRelease(versionSpec) {
   };
 }
 
-function pushRelease() {
+function pushRelease(release = readCurrentRelease()) {
   ensureMainBranch();
   ensureCleanTree();
 
-  const packageJson = readPackageJson();
-  const tagName = `v${packageJson.version}`;
+  const { packageName, tagName, version } = release;
 
   if (!tagExists(tagName)) {
     fail(
@@ -95,7 +91,11 @@ function pushRelease() {
   run("git", ["push", "origin", "main"]);
   run("git", ["push", "origin", tagName]);
 
-  console.log(`${tagName} pushed. GitHub Actions will publish it to npm.`);
+  console.log(`${tagName} pushed. Creating the GitHub Release and verifying npm.`);
+
+  createGitHubRelease(tagName);
+  watchPublishWorkflow(tagName);
+  verifyNpmVersion(packageName, version);
 }
 
 function createGitHubRelease(tagName) {
@@ -157,6 +157,17 @@ function verifyNpmVersion(packageName, version) {
 
 function readPackageJson() {
   return JSON.parse(readFileSync("package.json", "utf8"));
+}
+
+function readCurrentRelease() {
+  const packageJson = readPackageJson();
+  const version = packageJson.version;
+
+  return {
+    packageName: packageJson.name,
+    tagName: `v${version}`,
+    version,
+  };
 }
 
 function writePackageJson(packageJson) {
