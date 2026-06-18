@@ -23,10 +23,7 @@ export function BasicCachedFormPage() {
         <span className="active-badge">Saved page</span>
       </header>
 
-      <section
-        aria-label="Cached form"
-        className="form-panel compact-form"
-      >
+      <section aria-label="Cached form" className="form-panel compact-form">
         <div className="metric-grid">
           <StatusMetric label="Prepared" value={cachedForm.preparedAt} />
           <StatusMetric label="Load id" value={cachedForm.loadId} />

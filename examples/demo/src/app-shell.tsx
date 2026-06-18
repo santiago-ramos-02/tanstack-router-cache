@@ -39,10 +39,7 @@ export function AppShell() {
                     />
                   </li>
                   <li>
-                    <NavigationLink
-                      label="Reset form"
-                      to="/basic/reset-form"
-                    />
+                    <NavigationLink label="Reset form" to="/basic/reset-form" />
                   </li>
                 </ul>
               </li>
@@ -53,10 +50,7 @@ export function AppShell() {
                     <NavigationLink label="Saved draft" to="/advanced/draft" />
                   </li>
                   <li>
-                    <NavigationLink
-                      label="Saved list"
-                      to="/advanced/list"
-                    />
+                    <NavigationLink label="Saved list" to="/advanced/list" />
                   </li>
                 </ul>
               </li>

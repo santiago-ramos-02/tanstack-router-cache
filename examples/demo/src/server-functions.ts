@@ -29,7 +29,8 @@ function formatPreparedAt() {
 
 function getAbortReason(signal: AbortSignal) {
   return (
-    signal.reason ?? new DOMException("The operation was aborted.", "AbortError")
+    signal.reason ??
+    new DOMException("The operation was aborted.", "AbortError")
   );
 }
 

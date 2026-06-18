@@ -9,8 +9,8 @@ export function AdvancedOverviewPage() {
           <p className="eyebrow">Advanced examples</p>
           <h2>Use cached pages with larger state.</h2>
           <p>
-            Use these pages when an example has timers, filters, marked rows, long
-            notes, and a scroll position worth keeping.
+            Use these pages when an example has timers, filters, marked rows,
+            long notes, and a scroll position worth keeping.
           </p>
           <div className="button-row">
             <Link className="primary-button" to="/advanced/draft">

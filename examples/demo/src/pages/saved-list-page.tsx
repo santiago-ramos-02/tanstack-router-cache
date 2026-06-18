@@ -22,8 +22,7 @@ export function SavedListPage() {
   const [visibleSeconds, setVisibleSeconds] = useState(0);
   const normalizedQuery = query.trim().toLowerCase();
   const filteredRecords = savedList.records.filter((record) => {
-    const matchesCategory =
-      category === "All" || record.category === category;
+    const matchesCategory = category === "All" || record.category === category;
     const matchesQuery =
       normalizedQuery.length === 0 ||
       record.name.toLowerCase().includes(normalizedQuery) ||
@@ -63,8 +62,8 @@ export function SavedListPage() {
           <p className="eyebrow">Saved list</p>
           <h2>The filtered list stays ready.</h2>
           <p>
-            Search, filter, mark a row, scroll down, and return to the
-            same working view.
+            Search, filter, mark a row, scroll down, and return to the same
+            working view.
           </p>
         </div>
         <span className="active-badge">Saved list</span>

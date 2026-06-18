@@ -22,10 +22,7 @@ export function BasicResetFormPage() {
         <span className="active-badge muted">Resets</span>
       </header>
 
-      <section
-        aria-label="Reset form"
-        className="form-panel compact-form"
-      >
+      <section aria-label="Reset form" className="form-panel compact-form">
         <div className="metric-grid">
           <StatusMetric label="Prepared" value={resetForm.preparedAt} />
           <StatusMetric label="Load id" value={resetForm.loadId} />

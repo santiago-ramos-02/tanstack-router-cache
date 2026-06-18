@@ -85,7 +85,9 @@ function pushRelease(release) {
   run("git", ["push", "origin", "main"]);
   run("git", ["push", "origin", tagName]);
 
-  console.log(`${tagName} pushed. Creating the GitHub Release and verifying npm.`);
+  console.log(
+    `${tagName} pushed. Creating the GitHub Release and verifying npm.`
+  );
 
   createGitHubRelease(tagName);
   watchPublishWorkflow(tagName);

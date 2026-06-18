@@ -28,8 +28,8 @@ export function ResetPage() {
           <p className="eyebrow">Reset page</p>
           <h2>This page resets each time.</h2>
           <p>
-            Use this page as the control check when you want to compare a
-            cached page with a normal reset.
+            Use this page as the control check when you want to compare a cached
+            page with a normal reset.
           </p>
         </div>
         <span className="active-badge muted">Resets</span>
@@ -38,10 +38,7 @@ export function ResetPage() {
       <section aria-label="Reset page form" className="form-panel compact-form">
         <div className="metric-grid">
           <StatusMetric label="Prepared" value={resetPage.preparedAt} />
-          <StatusMetric
-            label="First wait"
-            value={`${resetPage.delayMs}ms`}
-          />
+          <StatusMetric label="First wait" value={`${resetPage.delayMs}ms`} />
           <StatusMetric label="Load id" value={resetPage.loadId} />
           <StatusMetric label="Open time" value={`${seconds}s`} />
         </div>
