@@ -5,11 +5,11 @@
 ```ts
 export type ActivityMode = "visible" | "hidden";
 
-export type RouteCacheOptions = {
-  maxAge?: number;
-};
-
-export type RouteCacheStaticOption = boolean | RouteCacheOptions;
+export type RouteCacheStaticOption =
+  | boolean
+  | {
+      maxAge?: number;
+    };
 
 export type RouteCacheNavigationStart = {
   pathname: string;

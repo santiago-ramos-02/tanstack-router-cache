@@ -1,5 +1,4 @@
 import type { StaticDataRouteOption } from "@tanstack/react-router";
-import type { RouteCacheOptions } from "./types";
 
 const DEFAULT_ROUTE_CACHE_MAX_AGE = Number.POSITIVE_INFINITY;
 
@@ -10,7 +9,7 @@ type CachedRouteTiming = {
 
 function getRouteCacheOptions(
   staticData: StaticDataRouteOption | undefined
-): RouteCacheOptions | undefined {
+): { maxAge?: number } | undefined {
   const routeCache = staticData?.routeCache;
 
   if (routeCache === true) {
@@ -29,7 +28,17 @@ function getRouteCacheOptions(
  * while route-cache-specific options are stored under `staticData.routeCache`.
  */
 export function defineRouteCache(
-  options: RouteCacheOptions & {
+  options: {
+    /**
+     * Maximum age, in milliseconds, for a retained route view.
+     *
+     * Expired cached views are not restored. This only controls the retained
+     * mounted view; use TanStack Router's `staleTime`, `preloadStaleTime`,
+     * and `gcTime` route options for loader-data caching.
+     *
+     * @defaultValue `Infinity`
+     */
+    maxAge?: number;
     /**
      * TanStack Router loader garbage-collection time, in milliseconds.
      *

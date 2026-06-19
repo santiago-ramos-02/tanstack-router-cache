@@ -1,27 +1,26 @@
 /** Visibility mode for a cached route container. */
 export type ActivityMode = "visible" | "hidden";
 
-/** Route-cache options stored in TanStack Router `staticData.routeCache`. */
-export type RouteCacheOptions = {
-  /**
-   * Maximum age, in milliseconds, for a retained route view.
-   *
-   * Expired cached views are not restored. This only controls the retained
-   * mounted view; use TanStack Router's `staleTime`, `preloadStaleTime`, and
-   * `gcTime` route options for loader-data caching.
-   *
-   * @defaultValue `Infinity`
-   */
-  maxAge?: number;
-};
-
 /**
  * Static route-cache opt-in value.
  *
  * Use `true` to keep the route view cached with default behavior, or an object
  * when the retained view needs route-cache-specific options.
  */
-export type RouteCacheStaticOption = boolean | RouteCacheOptions;
+export type RouteCacheStaticOption =
+  | boolean
+  | {
+      /**
+       * Maximum age, in milliseconds, for a retained route view.
+       *
+       * Expired cached views are not restored. This only controls the retained
+       * mounted view; use TanStack Router's `staleTime`, `preloadStaleTime`,
+       * and `gcTime` route options for loader-data caching.
+       *
+       * @defaultValue `Infinity`
+       */
+      maxAge?: number;
+    };
 
 /** Emitted when navigation to a ready cached route begins. */
 export type RouteCacheNavigationStart = {
