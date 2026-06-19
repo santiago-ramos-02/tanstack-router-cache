@@ -19,7 +19,7 @@ Owns the route cache and exposes cache state to the rest of the package.
 | --- | --- | --- | --- |
 | `children` | `ReactNode` | Required | The outlet and surrounding UI that can use the cache. |
 | `cacheScopeKey` | `string | number | null` | `"__default__"` | Resets the entire cache when the key changes. Use this for tenant, user, workspace, or environment changes. |
-| `defaultCachedRoutes` | `CachedRoutes` | `{}` | Initial cache data. Most apps do not need this. Entries without `staticData.routeCache: true` are ignored. |
+| `defaultCachedRoutes` | `CachedRoutes` | `{}` | Initial cache data. Most apps do not need this. Entries without enabled `staticData.routeCache` or entries older than their `maxAge` are ignored. |
 | `maxEntries` | `number` | `Infinity` | Maximum cached route entries across the provider. `0` disables caching. Non-finite or invalid values are treated as `Infinity`. |
 | `maxEntriesPerRouteId` | `number` | `Infinity` | Maximum cached entries for the same TanStack route id. Useful for dynamic routes such as `/customers/$id`. |
 
@@ -38,4 +38,3 @@ Renders the live TanStack Router outlet and any hidden cached route views.
 | `children` | `ReactNode` | `undefined` | Optional content rendered after the outlet manager. |
 
 Use one `RouterCacheOutlet` inside a `RouterCacheProvider` for the route branch you want to cache.
-

@@ -70,7 +70,25 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-Routes without `routeCache: true` are rendered and unmounted by TanStack Router normally.
+Routes without enabled `routeCache` are rendered and unmounted by TanStack Router normally.
+
+When you also need TanStack Router loader cache options, use `defineRouteCache`. It keeps Router options at the top level of the route config while adding the `staticData.routeCache` opt-in for this package.
+
+```tsx
+import { defineRouteCache } from "tanstack-router-cache";
+
+export const Route = createFileRoute("/customers")({
+  ...defineRouteCache({
+    gcTime: Number.POSITIVE_INFINITY,
+    maxAge: 10 * 60_000,
+    preloadStaleTime: 30_000,
+    staleTime: Number.POSITIVE_INFINITY,
+  }),
+  component: CustomersPage,
+});
+```
+
+In that example, `staleTime`, `preloadStaleTime`, and `gcTime` are TanStack Router route options. `maxAge` is the route-cache view lifetime; after that age the cached view is not restored and the live route renders again.
 
 ### 3. Pause route work while hidden
 
@@ -123,7 +141,7 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-Routes without `routeCache: true` are rendered normally and are removed when TanStack Router unmounts them.
+Routes without enabled `routeCache` are rendered normally and are removed when TanStack Router unmounts them.
 
 ## Route static data
 
@@ -132,7 +150,11 @@ The package augments TanStack Router's `StaticDataRouteOption` type:
 ```ts
 declare module "@tanstack/react-router" {
   interface StaticDataRouteOption {
-    routeCache?: boolean;
+    routeCache?:
+      | boolean
+      | {
+          maxAge?: number;
+        };
   }
 }
 ```
@@ -143,6 +165,19 @@ Set `routeCache: true` on the route whose rendered view should be retained.
 export const Route = createFileRoute("/reports")({
   staticData: {
     routeCache: true,
+  },
+  component: ReportsPage,
+});
+```
+
+Use an object when the retained route view should expire independently from TanStack Router's loader cache:
+
+```tsx
+export const Route = createFileRoute("/reports")({
+  staticData: {
+    routeCache: {
+      maxAge: 5 * 60_000,
+    },
   },
   component: ReportsPage,
 });

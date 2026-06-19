@@ -45,12 +45,12 @@ flowchart TD
 
 ## Route lifecycle
 
-A route becomes cacheable only after the current match is resolved, successful, and marked with `staticData.routeCache: true`.
+A route becomes cacheable only after the current match is resolved, successful, and marked with enabled `staticData.routeCache`.
 
 ```mermaid
 stateDiagram-v2
   [*] --> LiveRoute: normal TanStack render
-  LiveRoute --> WaitingForReady: routeCache true
+  LiveRoute --> WaitingForReady: routeCache enabled
   WaitingForReady --> CachedReady: match success and snapshot stored
   CachedReady --> VisibleCached: pathname is visible
   VisibleCached --> HiddenCached: navigate away
@@ -60,7 +60,7 @@ stateDiagram-v2
   Evicted --> [*]
 ```
 
-In normal usage, a cached route alternates between `visible` and `hidden`. It leaves the cache when a limit evicts it, the app invalidates it, the route stops being cacheable, or an error boundary marks it as failed.
+In normal usage, a cached route alternates between `visible` and `hidden`. It leaves the cache when a limit evicts it, its route `maxAge` expires, the app invalidates it, the route stops being cacheable, or an error boundary marks it as failed.
 
 ## Provider state
 
@@ -147,7 +147,7 @@ classDiagram
 | `href` | Full route href, including search and hash when available. Used for restoration. |
 | `lastVisibleAt` | Last time the entry became visible. Primary eviction timestamp. |
 | `routeId` | TanStack route id. Used by `maxEntriesPerRouteId`. |
-| `staticData` | Route static data. The route is cacheable when `routeCache` is `true`. |
+| `staticData` | Route static data. The route is cacheable when `routeCache` is `true` or an options object. |
 | `matchId` | Match id used to render the cached route with TanStack Router's `Match`. |
 | `routerSnapshot` | Router-like object with isolated snapshot stores used by the cached route tree. |
 | `ready` | Marks that the route has a complete snapshot and can be rendered from cache. |
@@ -204,7 +204,7 @@ flowchart TD
   staticData["Find deepest routeCache static data"]
   errored{"Current route errored?"}
   resolved{"Match resolved?"}
-  cacheable{"routeCache true?"}
+  cacheable{"routeCache enabled?"}
   ready{"Match successful?"}
   write["Create or refresh cache entry"]
   deleteEntry["Delete cache entry"]
@@ -224,6 +224,8 @@ flowchart TD
 ```
 
 The current entry being written is protected during limit enforcement so the route that just became ready is not immediately evicted.
+
+Cached entries with a route `maxAge` are treated as expired when their age exceeds that value. Expired entries are not rendered from the snapshot and are removed on the next cache update.
 
 ## Visible pathname
 
@@ -496,6 +498,7 @@ The memory controls are:
 - route opt-in through `staticData.routeCache`,
 - `maxEntries` for global cache size,
 - `maxEntriesPerRouteId` for dynamic routes,
+- route-level `maxAge` for expiring retained views,
 - `cacheScopeKey` for tenant, user, workspace, or environment resets,
 - `destroy`, `destroyAll`, and `invalidateWhere` for manual invalidation,
 - automatic deletion when a route stops being cacheable or enters an error state.

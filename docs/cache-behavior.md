@@ -5,6 +5,7 @@
 - Hidden cached routes are rendered in off-screen containers and receive active-change events.
 - Cached dynamic routes can grow memory use if every id is retained; use `maxEntriesPerRouteId` for those routes.
 - If a cached destination is restored with an outdated href, the package navigates back to the cached href with `replace: true` and `resetScroll: false`.
+- A route can use `staticData.routeCache.maxAge` to stop restoring an old retained view after a fixed age.
 
 ## Eviction
 
@@ -26,3 +27,19 @@ Use `cacheScopeKey` when cached views must not survive a user, tenant, workspace
 
 Changing the scope key clears existing cached route entries for that provider.
 
+## Route max age
+
+`maxAge` controls the lifetime of this package's retained route view. It does not replace TanStack Router's top-level `staleTime`, `preloadStaleTime`, or `gcTime` options.
+
+```tsx
+export const Route = createFileRoute("/customers")({
+  staticData: {
+    routeCache: {
+      maxAge: 10 * 60_000,
+    },
+  },
+  component: CustomersPage,
+});
+```
+
+When a cached entry is older than `maxAge`, the cache manager does not restore it. The live route renders and the expired cache entry is removed on the next cache update.
