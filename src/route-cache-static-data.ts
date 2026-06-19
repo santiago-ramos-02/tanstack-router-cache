@@ -81,9 +81,7 @@ function normalizeRouteCacheMaxAge(maxAge: number | undefined) {
   return Math.max(maxAge, 0);
 }
 
-function getRouteCacheMaxAge(
-  staticData: StaticDataRouteOption | undefined
-) {
+function getRouteCacheMaxAge(staticData: StaticDataRouteOption | undefined) {
   return normalizeRouteCacheMaxAge(getRouteCacheOptions(staticData)?.maxAge);
 }
 
