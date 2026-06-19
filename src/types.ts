@@ -23,29 +23,6 @@ export type RouteCacheOptions = {
  */
 export type RouteCacheStaticOption = boolean | RouteCacheOptions;
 
-/** Options accepted by `defineRouteCache`. */
-export type RouteCacheRouteOptions = RouteCacheOptions & {
-  /**
-   * TanStack Router loader garbage-collection time, in milliseconds.
-   *
-   * This is returned as a top-level route option.
-   */
-  gcTime?: number;
-  /**
-   * TanStack Router preload freshness time, in milliseconds.
-   *
-   * This is returned as a top-level route option.
-   */
-  preloadStaleTime?: number;
-  /**
-   * TanStack Router loader freshness time, in milliseconds.
-   *
-   * This is returned as a top-level route option and does not control the
-   * retained route view lifetime. Use `maxAge` for that.
-   */
-  staleTime?: number;
-};
-
 /** Emitted when navigation to a ready cached route begins. */
 export type RouteCacheNavigationStart = {
   /** Normalized pathname for the cached route being restored. */

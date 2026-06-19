@@ -11,12 +11,6 @@ export type RouteCacheOptions = {
 
 export type RouteCacheStaticOption = boolean | RouteCacheOptions;
 
-export type RouteCacheRouteOptions = RouteCacheOptions & {
-  gcTime?: number;
-  preloadStaleTime?: number;
-  staleTime?: number;
-};
-
 export type RouteCacheNavigationStart = {
   pathname: string;
   startedAt: number;

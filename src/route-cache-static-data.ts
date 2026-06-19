@@ -1,5 +1,5 @@
 import type { StaticDataRouteOption } from "@tanstack/react-router";
-import type { RouteCacheOptions, RouteCacheRouteOptions } from "./types";
+import type { RouteCacheOptions } from "./types";
 
 const DEFAULT_ROUTE_CACHE_MAX_AGE = Number.POSITIVE_INFINITY;
 
@@ -28,7 +28,29 @@ function getRouteCacheOptions(
  * TanStack Router loader-cache options are returned at the route-option level,
  * while route-cache-specific options are stored under `staticData.routeCache`.
  */
-export function defineRouteCache(options: RouteCacheRouteOptions = {}) {
+export function defineRouteCache(
+  options: RouteCacheOptions & {
+    /**
+     * TanStack Router loader garbage-collection time, in milliseconds.
+     *
+     * This is returned as a top-level route option.
+     */
+    gcTime?: number;
+    /**
+     * TanStack Router preload freshness time, in milliseconds.
+     *
+     * This is returned as a top-level route option.
+     */
+    preloadStaleTime?: number;
+    /**
+     * TanStack Router loader freshness time, in milliseconds.
+     *
+     * This is returned as a top-level route option and does not control the
+     * retained route view lifetime. Use `maxAge` for that.
+     */
+    staleTime?: number;
+  } = {}
+) {
   const { gcTime, maxAge, preloadStaleTime, staleTime } = options;
 
   return {
