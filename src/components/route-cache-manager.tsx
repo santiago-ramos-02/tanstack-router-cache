@@ -15,6 +15,10 @@ import { useRouterCacheContext } from "../contexts/router-cache";
 import { useEventListener } from "../hooks/use-event-listener";
 import { useRouterCacheDebug } from "../hooks/use-router-cache-debug";
 import { normalizeCachedRoutePathname } from "../pathname";
+import {
+  isCachedRouteStale,
+  isRouteCacheEnabled,
+} from "../route-cache-static-data";
 import type { ActivityMode } from "../types";
 import CachedOutlet from "./cached-outlet";
 import OffScreen from "./off-screen";
@@ -196,14 +200,11 @@ function isReadyCachedRoute(route: ReadyCachedRoute | undefined) {
   return Boolean(
     route &&
       isRouteCacheEnabled(route.staticData) &&
+      !isCachedRouteStale(route) &&
       route.ready &&
       route.matchId &&
       route.routerSnapshot
   );
-}
-
-function isRouteCacheEnabled(staticData: StaticDataRouteOption | undefined) {
-  return staticData?.routeCache === true;
 }
 
 function hasErroredRouteMatch(matches: Array<RouterMatch | undefined>) {
@@ -598,6 +599,10 @@ function renderCachedRoute({
     return null;
   }
 
+  if (isCachedRouteStale(route)) {
+    return null;
+  }
+
   const content =
     route.matchId && route.routerSnapshot ? (
       <CachedOutlet
@@ -618,6 +623,16 @@ function renderCachedRoute({
     >
       {content}
     </OffScreen>
+  );
+}
+
+function getStaleCachedRoutePathnames(
+  cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"]
+) {
+  const now = Date.now();
+
+  return Object.entries(cachedRoutes).flatMap(([pathname, route]) =>
+    isCachedRouteStale(route, now) ? [pathname] : []
   );
 }
 
@@ -754,6 +769,14 @@ function RouteCacheManager() {
     isRouteCacheEnabled: isRouteCacheEnabled(destinationRoute?.staticData),
     previousPathname,
   });
+
+  useLayoutEffect(() => {
+    const stalePathnames = getStaleCachedRoutePathnames(cachedRoutes);
+
+    if (stalePathnames.length > 0) {
+      deleteCachedRoutes(stalePathnames);
+    }
+  }, [cachedRoutes, deleteCachedRoutes]);
 
   useLayoutEffect(() => {
     if (shouldRestoreDestinationHref) {

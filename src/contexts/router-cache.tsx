@@ -5,6 +5,10 @@ import type {
 import type { ComponentProps, ReactNode } from "react";
 import { createContext, use, useRef, useState } from "react";
 import { normalizeCachedRoutePathname } from "../pathname";
+import {
+  isCachedRouteStale,
+  isRouteCacheEnabled,
+} from "../route-cache-static-data";
 
 type RouterCacheProviderProps = {
   cacheScopeKey?: string | number | null;
@@ -76,18 +80,33 @@ function shallowEqualRouteStaticData(
   return true;
 }
 
-function isCacheEnabledRouteData(route: CachedRouteData | undefined) {
-  return route?.staticData.routeCache === true;
-}
-
 function filterRouterCacheRoutes(routes: CachedRoutes) {
+  const now = Date.now();
+
   return Object.fromEntries(
     Object.entries(routes).flatMap(([pathname, route]) =>
-      isCacheEnabledRouteData(route)
+      isRouteCacheEnabled(route.staticData) && !isCachedRouteStale(route, now)
         ? [[normalizeCachedRoutePathname(pathname), route] as const]
         : []
     )
   );
+}
+
+function pruneStaleCachedRoutes(routes: CachedRoutes) {
+  const now = Date.now();
+  const nextRoutes: CachedRoutes = {};
+  let changed = false;
+
+  for (const [pathname, route] of Object.entries(routes)) {
+    if (isCachedRouteStale(route, now)) {
+      changed = true;
+      continue;
+    }
+
+    nextRoutes[pathname] = route;
+  }
+
+  return changed ? nextRoutes : routes;
 }
 
 function isSameCachedRouteData(
@@ -294,34 +313,33 @@ function getNextCachedRoutesState(params: {
   value: CachedRouteData;
 }) {
   const normalizedKey = normalizeCachedRoutePathname(params.key);
+  const state = pruneStaleCachedRoutes(params.state);
 
   if (params.cacheConfig.maxEntries === 0) {
-    return params.state === EMPTY_CACHED_ROUTES
-      ? params.state
-      : EMPTY_CACHED_ROUTES;
+    return state === EMPTY_CACHED_ROUTES ? state : EMPTY_CACHED_ROUTES;
   }
 
-  if (!isCacheEnabledRouteData(params.value)) {
-    if (!Object.hasOwn(params.state, normalizedKey)) {
-      return params.state;
+  if (!isRouteCacheEnabled(params.value.staticData)) {
+    if (!Object.hasOwn(state, normalizedKey)) {
+      return state;
     }
 
-    const nextState = { ...params.state };
+    const nextState = { ...state };
     delete nextState[normalizedKey];
     return nextState;
   }
 
   const nextRouteData = createCachedRouteData(
-    params.state[normalizedKey],
+    state[normalizedKey],
     params.value
   );
 
-  if (isSameCachedRouteData(params.state[normalizedKey], nextRouteData)) {
-    return params.state;
+  if (isSameCachedRouteData(state[normalizedKey], nextRouteData)) {
+    return state;
   }
 
   return applyCachedRouteLimits(
-    { ...params.state, [normalizedKey]: nextRouteData },
+    { ...state, [normalizedKey]: nextRouteData },
     params.cacheConfig,
     new Set([normalizedKey])
   );
