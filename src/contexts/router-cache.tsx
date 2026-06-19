@@ -11,26 +11,66 @@ import {
 } from "../route-cache-static-data";
 
 type RouterCacheProviderProps = {
+  /**
+   * Clears all cached routes when the key changes.
+   *
+   * Use this for user, tenant, workspace, locale, or environment boundaries.
+   *
+   * @defaultValue `"__default__"`
+   */
   cacheScopeKey?: string | number | null;
+  /** Outlet and surrounding UI that can access the route cache. */
   children: ReactNode;
+  /**
+   * Initial cached route entries.
+   *
+   * Most apps do not need this. Entries without enabled `staticData.routeCache`
+   * or entries older than their `maxAge` are ignored.
+   *
+   * @defaultValue `{}`
+   */
   defaultCachedRoutes?: CachedRoutes;
+  /**
+   * Maximum cached route entries across this provider.
+   *
+   * Set to `0` to disable caching.
+   *
+   * @defaultValue `Infinity`
+   */
   maxEntries?: number;
+  /**
+   * Maximum cached entries for the same TanStack route id.
+   *
+   * Useful for dynamic routes where each pathname can create a separate cached
+   * view.
+   *
+   * @defaultValue `Infinity`
+   */
   maxEntriesPerRouteId?: number;
 };
 
 type RouterSnapshot = ComponentProps<typeof RouterContextProvider>["router"];
 
 export type CachedRouteData = {
+  /** First time this cache entry was stored, as `Date.now()`. */
   createdAt?: number;
+  /** Full cached href, including search and hash when available. */
   href?: string;
+  /** Last time this cached route became visible, as `Date.now()`. */
   lastVisibleAt?: number;
+  /** TanStack Router route id used for per-route entry limits. */
   routeId?: string;
+  /** Static data from the deepest cache-enabled route match. */
   staticData: StaticDataRouteOption;
+  /** TanStack Router match id rendered by the cached outlet. */
   matchId?: string;
+  /** Router snapshot used to keep the cached route tree isolated while hidden. */
   routerSnapshot?: RouterSnapshot;
+  /** Whether the cached route has a complete snapshot and can be restored. */
   ready?: boolean;
 };
 
+/** Cached route entries keyed by normalized pathname. */
 export type CachedRoutes = {
   [key: string]: CachedRouteData;
 };

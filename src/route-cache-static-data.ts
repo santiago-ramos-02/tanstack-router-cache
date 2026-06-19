@@ -22,6 +22,12 @@ function getRouteCacheOptions(
   }
 }
 
+/**
+ * Builds route options for a cacheable TanStack Router route.
+ *
+ * TanStack Router loader-cache options are returned at the route-option level,
+ * while route-cache-specific options are stored under `staticData.routeCache`.
+ */
 export function defineRouteCache(options: RouteCacheRouteOptions = {}) {
   const { gcTime, maxAge, preloadStaleTime, staleTime } = options;
 

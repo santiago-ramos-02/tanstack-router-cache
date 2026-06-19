@@ -16,6 +16,12 @@ export type * from "./types";
 declare module "@tanstack/react-router" {
   // biome-ignore lint/style/useConsistentTypeDefinitions: TanStack Router static data is extended through interface merging.
   interface StaticDataRouteOption {
+    /**
+     * Enables retained route-view caching for this route.
+     *
+     * Use `true` for default behavior, or pass an options object for
+     * route-cache-specific settings such as `maxAge`.
+     */
     routeCache?: RouteCacheStaticOption;
   }
 }
