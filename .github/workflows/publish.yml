@@ -7,15 +7,11 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  publish:
-    name: Publish package
+  verify:
+    name: Verify package
     runs-on: ubuntu-latest
-    environment:
-      name: npm-publish
-      url: https://www.npmjs.com/package/tanstack-router-cache
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,7 +20,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
       - name: Setup Bun
@@ -46,6 +41,40 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Upload package build
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-build
+          path: dist
+          if-no-files-found: error
+
+  publish:
+    name: Publish package
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: npm-publish
+      url: https://www.npmjs.com/package/tanstack-router-cache
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Download package build
+        uses: actions/download-artifact@v4
+        with:
+          name: package-build
+          path: dist
 
       - name: Publish
         run: npm publish --access public
