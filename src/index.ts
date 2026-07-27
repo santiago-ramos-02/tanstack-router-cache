@@ -1,3 +1,5 @@
+"use client";
+
 import type { RouteCacheStaticOption } from "./types";
 
 // biome-ignore lint/performance/noBarrelFile: this file is the package's public entry point.
