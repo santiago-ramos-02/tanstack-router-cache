@@ -77,4 +77,4 @@ jobs:
           path: dist
 
       - name: Publish
-        run: npm publish --access public
+        run: npm publish --access public --ignore-scripts
