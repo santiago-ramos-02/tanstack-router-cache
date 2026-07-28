@@ -3,7 +3,14 @@ import type {
   StaticDataRouteOption,
 } from "@tanstack/react-router";
 import type { ComponentProps, ReactNode } from "react";
-import { createContext, use, useRef, useState } from "react";
+import {
+  createContext,
+  use,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { normalizeCachedRoutePathname } from "../pathname";
 import {
   isCachedRouteStale,
@@ -436,18 +443,21 @@ function RouterCacheProviderScope({
     Record<string, number>
   >({});
 
-  const updateCachedRoutes = (key: string, value: CachedRouteData) => {
-    setCachedRoutes((state) =>
-      getNextCachedRoutesState({
-        cacheConfig: cacheConfigRef.current,
-        key,
-        state,
-        value,
-      })
-    );
-  };
+  const updateCachedRoutes = useCallback(
+    (key: string, value: CachedRouteData) => {
+      setCachedRoutes((state) =>
+        getNextCachedRoutesState({
+          cacheConfig: cacheConfigRef.current,
+          key,
+          state,
+          value,
+        })
+      );
+    },
+    []
+  );
 
-  const deleteCachedRoutes = (keys: string[]) => {
+  const deleteCachedRoutes = useCallback((keys: string[]) => {
     setCachedRoutes((state) => {
       let changed = false;
       const newState = { ...state };
@@ -461,9 +471,9 @@ function RouterCacheProviderScope({
 
       return changed ? newState : state;
     });
-  };
+  }, []);
 
-  const touchCachedRoutes = (keys: string[]) => {
+  const touchCachedRoutes = useCallback((keys: string[]) => {
     setCachedRoutes((state) => {
       let changed = false;
       const touchedAt = Date.now();
@@ -486,9 +496,9 @@ function RouterCacheProviderScope({
 
       return changed ? nextState : state;
     });
-  };
+  }, []);
 
-  const retainErroredRoute = (pathname: string) => {
+  const retainErroredRoute = useCallback((pathname: string) => {
     const normalizedPathname = normalizeCachedRoutePathname(pathname);
 
     setErroredRouteCounts((state) => ({
@@ -505,9 +515,9 @@ function RouterCacheProviderScope({
       delete nextState[normalizedPathname];
       return nextState;
     });
-  };
+  }, []);
 
-  const releaseErroredRoute = (pathname: string) => {
+  const releaseErroredRoute = useCallback((pathname: string) => {
     const normalizedPathname = normalizeCachedRoutePathname(pathname);
 
     setErroredRouteCounts((state) => {
@@ -528,17 +538,28 @@ function RouterCacheProviderScope({
         [normalizedPathname]: currentCount - 1,
       };
     });
-  };
+  }, []);
 
-  const contextValue = {
-    cachedRoutes,
-    erroredRouteCounts,
-    setCachedRoutes: updateCachedRoutes,
-    deleteCachedRoutes,
-    touchCachedRoutes,
-    retainErroredRoute,
-    releaseErroredRoute,
-  };
+  const contextValue = useMemo(
+    () => ({
+      cachedRoutes,
+      erroredRouteCounts,
+      setCachedRoutes: updateCachedRoutes,
+      deleteCachedRoutes,
+      touchCachedRoutes,
+      retainErroredRoute,
+      releaseErroredRoute,
+    }),
+    [
+      cachedRoutes,
+      deleteCachedRoutes,
+      erroredRouteCounts,
+      releaseErroredRoute,
+      retainErroredRoute,
+      touchCachedRoutes,
+      updateCachedRoutes,
+    ]
+  );
 
   return (
     <RouterCacheContext.Provider value={contextValue}>

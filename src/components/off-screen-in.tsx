@@ -10,12 +10,13 @@ import {
   initializeTransientUiTracking,
   syncTransientUiRouteActivity,
 } from "../dom/dismiss-transient-ui";
-import type { ActivityMode } from "../types";
+import type { ActivityMode, RouteCacheEffectMode } from "../types";
 
 export type OffScreenInProps = {
   mode: ActivityMode;
   children: ReactNode;
   containerRef?: RefObject<HTMLDivElement | null>;
+  effectMode?: RouteCacheEffectMode;
   pathname?: string;
 };
 
@@ -46,7 +47,13 @@ const SCROLL_RESTORE_DELAYS = [
 ] as const;
 
 export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
-  const { mode, children, containerRef, pathname } = props;
+  const {
+    mode,
+    children,
+    containerRef,
+    effectMode = "pause",
+    pathname,
+  } = props;
   const localContainerRef = useRef<HTMLDivElement | null>(null);
 
   const attachContainerRef = (node: HTMLDivElement | null) => {
@@ -189,17 +196,31 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     };
   }, [mode, pathname]);
 
-  return (
-    <Activity mode={mode}>
-      <div
-        className="flex min-h-full w-full flex-1 flex-col"
-        data-router-cache-container="true"
-        data-router-cache-mode={mode}
-        data-router-cache-pathname={pathname}
-        ref={attachContainerRef}
-      >
-        {children}
-      </div>
-    </Activity>
+  const container = (
+    <div
+      aria-hidden={
+        effectMode === "keep-alive" && mode === "hidden" ? true : undefined
+      }
+      className="flex min-h-full w-full flex-1 flex-col"
+      data-router-cache-container="true"
+      data-router-cache-effect-mode={effectMode}
+      data-router-cache-mode={mode}
+      data-router-cache-pathname={pathname}
+      inert={effectMode === "keep-alive" && mode === "hidden"}
+      ref={attachContainerRef}
+      style={
+        effectMode === "keep-alive" && mode === "hidden"
+          ? { display: "none" }
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  );
+
+  return effectMode === "keep-alive" ? (
+    container
+  ) : (
+    <Activity mode={mode}>{container}</Activity>
   );
 }

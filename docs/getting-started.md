@@ -79,6 +79,7 @@ import { defineRouteCache } from "tanstack-router-cache";
 
 export const Route = createFileRoute("/customers")({
   ...defineRouteCache({
+    effectMode: "keep-alive",
     gcTime: Number.POSITIVE_INFINITY,
     maxAge: 10 * 60_000,
     preloadStaleTime: 30_000,
@@ -88,7 +89,20 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-In that example, `staleTime`, `preloadStaleTime`, and `gcTime` are TanStack Router route options. `maxAge` is the route-cache view lifetime; after that age the cached view is not restored and the live route renders again.
+In that example, `staleTime`, `preloadStaleTime`, and `gcTime` are TanStack
+Router route options. `maxAge` is the route-cache view lifetime; after that age
+the cached view is not restored and the live route renders again.
+`effectMode: "keep-alive"` keeps ordinary component effects mounted while the
+retained route is hidden.
+
+The default `effectMode: "pause"` uses React Activity. Local state and DOM are
+preserved, but React cleans up effects while the route is hidden and starts them
+again when it becomes visible.
+
+Use `"keep-alive"` only when effects must survive navigation, such as a
+component-level data loader that should not refetch and flash its loading state
+when the user returns. Timers, subscriptions, and requests continue in the
+background in this mode.
 
 ### 3. Pause route work while hidden
 

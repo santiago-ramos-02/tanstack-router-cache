@@ -1,6 +1,9 @@
 import type { StaticDataRouteOption } from "@tanstack/react-router";
 
+import type { RouteCacheEffectMode, RouteCacheStaticOption } from "./types";
+
 const DEFAULT_ROUTE_CACHE_MAX_AGE = Number.POSITIVE_INFINITY;
+const DEFAULT_ROUTE_CACHE_EFFECT_MODE: RouteCacheEffectMode = "pause";
 
 type CachedRouteTiming = {
   createdAt?: number;
@@ -9,7 +12,7 @@ type CachedRouteTiming = {
 
 function getRouteCacheOptions(
   staticData: StaticDataRouteOption | undefined
-): { maxAge?: number } | undefined {
+): Exclude<RouteCacheStaticOption, boolean> | undefined {
   const routeCache = staticData?.routeCache;
 
   if (routeCache === true) {
@@ -29,6 +32,14 @@ function getRouteCacheOptions(
  */
 export function defineRouteCache(
   options: {
+    /**
+     * Controls whether effects pause or remain mounted while this route is
+     * hidden.
+     *
+     * `"pause"` uses React Activity. `"keep-alive"` hides the retained DOM
+     * without deactivating its effects.
+     */
+    effectMode?: RouteCacheEffectMode;
     /**
      * Maximum age, in milliseconds, for a retained route view.
      *
@@ -60,14 +71,20 @@ export function defineRouteCache(
     staleTime?: number;
   } = {}
 ) {
-  const { gcTime, maxAge, preloadStaleTime, staleTime } = options;
+  const { effectMode, gcTime, maxAge, preloadStaleTime, staleTime } = options;
 
   return {
     ...(gcTime === undefined ? {} : { gcTime }),
     ...(preloadStaleTime === undefined ? {} : { preloadStaleTime }),
     ...(staleTime === undefined ? {} : { staleTime }),
     staticData: {
-      routeCache: maxAge === undefined ? true : { maxAge },
+      routeCache:
+        maxAge === undefined && effectMode === undefined
+          ? true
+          : {
+              ...(effectMode === undefined ? {} : { effectMode }),
+              ...(maxAge === undefined ? {} : { maxAge }),
+            },
     },
   };
 }
@@ -76,6 +93,14 @@ export function isRouteCacheEnabled(
   staticData: StaticDataRouteOption | undefined
 ) {
   return Boolean(getRouteCacheOptions(staticData));
+}
+
+export function getRouteCacheEffectMode(
+  staticData: StaticDataRouteOption | undefined
+): RouteCacheEffectMode {
+  return getRouteCacheOptions(staticData)?.effectMode === "keep-alive"
+    ? "keep-alive"
+    : DEFAULT_ROUTE_CACHE_EFFECT_MODE;
 }
 
 function normalizeRouteCacheMaxAge(maxAge: number | undefined) {

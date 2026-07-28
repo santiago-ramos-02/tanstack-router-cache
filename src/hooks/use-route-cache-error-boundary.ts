@@ -5,12 +5,14 @@ import { normalizeCachedRoutePathname } from "../pathname";
 
 export function useRouteCacheErrorBoundary(pathname?: string) {
   const context = useOptionalRouterCacheContext();
+  const releaseErroredRoute = context?.releaseErroredRoute;
+  const retainErroredRoute = context?.retainErroredRoute;
   const routePathname = useLocation({
     select: (location) => location.pathname,
   });
 
   useEffect(() => {
-    if (!context) {
+    if (!(releaseErroredRoute && retainErroredRoute)) {
       return;
     }
 
@@ -18,10 +20,10 @@ export function useRouteCacheErrorBoundary(pathname?: string) {
       pathname ?? routePathname
     );
 
-    context.retainErroredRoute(targetPathname);
+    retainErroredRoute(targetPathname);
 
     return () => {
-      context.releaseErroredRoute(targetPathname);
+      releaseErroredRoute(targetPathname);
     };
-  }, [context, pathname, routePathname]);
+  }, [pathname, releaseErroredRoute, retainErroredRoute, routePathname]);
 }

@@ -51,6 +51,10 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
+Routes pause effects while hidden by default. For component-level loaders or
+subscriptions that must stay mounted, use
+`defineRouteCache({ effectMode: "keep-alive" })`.
+
 For the full API, see [docs](./docs).
 
 ## Examples

@@ -16,6 +16,7 @@ import { useEventListener } from "../hooks/use-event-listener";
 import { useRouterCacheDebug } from "../hooks/use-router-cache-debug";
 import { normalizeCachedRoutePathname } from "../pathname";
 import {
+  getRouteCacheEffectMode,
   isCachedRouteStale,
   isRouteCacheEnabled,
 } from "../route-cache-static-data";
@@ -617,6 +618,7 @@ function renderCachedRoute({
 
   return (
     <OffScreen
+      effectMode={getRouteCacheEffectMode(route.staticData)}
       key={pathname}
       mode={routerPathname === pathname ? "visible" : "hidden"}
       pathname={pathname}

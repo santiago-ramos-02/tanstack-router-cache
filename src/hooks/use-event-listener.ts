@@ -23,7 +23,7 @@ type EventHandler<TName extends EventName> = (...args: Events[TName]) => void;
 type EventBucket = {
   [key in EventName]?: EventHandler<key>;
 };
-type EventBuckets = { on?: EventBucket; once?: EventBucket };
+export type EventBuckets = { on?: EventBucket; once?: EventBucket };
 type ListenerStore = {
   [key in EventName]: Set<EventHandler<key>>;
 };

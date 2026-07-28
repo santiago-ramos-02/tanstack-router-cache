@@ -38,7 +38,7 @@ flowchart TD
 | `RouterCacheOutlet` | Replaces TanStack Router's outlet for the route branch that can be cached. |
 | Cache manager | Reads live router state, decides whether to render the live outlet or cached outlets, and synchronizes cache entries. |
 | `CachedOutlet` | Renders a cached route from a stored router snapshot and match id. |
-| `OffScreen` | Wraps cached route content in React `Activity` and marks the route as `visible` or `hidden`. |
+| `OffScreen` | Marks cached content as `visible` or `hidden`, using React `Activity` in `"pause"` mode or retained hidden DOM in `"keep-alive"` mode. |
 | Event listener | Emits route activity and cached-navigation lifecycle events used by hooks. |
 | Debug hook | Exposes development diagnostics on `window.__TANSTACK_ROUTER_CACHE_DEBUG__`. |
 | Transient UI tracker | Tracks external UI added outside the route container and hides or restores it with the owning route. |
@@ -261,7 +261,10 @@ Most of the time, `visiblePathname` is the resolved pathname. During some naviga
 Every ready cached entry is rendered through `OffScreen`.
 
 ```tsx
-<OffScreen mode={visiblePathname === pathname ? "visible" : "hidden"}>
+<OffScreen
+  effectMode={getRouteCacheEffectMode(route.staticData)}
+  mode={visiblePathname === pathname ? "visible" : "hidden"}
+>
   <CachedOutlet matchId={route.matchId} routerSnapshot={route.routerSnapshot} />
 </OffScreen>
 ```
@@ -271,22 +274,29 @@ flowchart TD
   routes["CachedRoutes entries"]
   entry["Ready cache entry"]
   offscreen["OffScreen"]
+  effectMode{"effectMode"}
   activity["React Activity"]
+  retainedDom["Retained hidden DOM"]
   mode{"Visible pathname matches entry?"}
   visible["mode = visible"]
   hidden["mode = hidden"]
   dom["data-router-cache attributes"]
 
-  routes --> entry --> offscreen --> activity --> mode
+  routes --> entry --> offscreen --> effectMode
+  effectMode -- pause --> activity --> mode
+  effectMode -- keep-alive --> retainedDom --> mode
   mode -- yes --> visible --> dom
   mode -- no --> hidden --> dom
 ```
 
-`OffScreen` uses React `Activity` with either `visible` or `hidden` mode. The route tree remains mounted in both modes. The wrapping element gets these attributes:
+`OffScreen` uses React `Activity` in the default `"pause"` effect mode. In
+`"keep-alive"` mode it hides the retained DOM directly, leaving child effects
+mounted. The wrapping element gets these attributes:
 
 ```html
 <div
   data-router-cache-container="true"
+  data-router-cache-effect-mode="pause"
   data-router-cache-mode="hidden"
   data-router-cache-pathname="/customers"
 >
