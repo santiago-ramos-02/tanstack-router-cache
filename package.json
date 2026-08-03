@@ -46,9 +46,10 @@
     "build": "bun run clean && rolldown -c && tsc",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
-    "lint": "oxlint src scripts .github/scripts rolldown.config.ts",
-    "lint:fix": "oxlint --fix src scripts .github/scripts rolldown.config.ts",
-    "check": "bun run lint && bun run typecheck && bun run build && bun run pack:dry-run",
+    "lint": "oxlint src scripts test .github/scripts rolldown.config.ts",
+    "lint:fix": "oxlint --fix src scripts test .github/scripts rolldown.config.ts",
+    "check": "bun run lint && bun run typecheck && bun run test && bun run build && bun run pack:dry-run",
+    "test": "bun test",
     "pack:dry-run": "npm pack --dry-run",
     "release": "node scripts/release.mjs",
     "prepack": "bun run build",
@@ -68,8 +69,8 @@
   },
   "peerDependencies": {
     "@tanstack/react-router": ">=1.168.14 <2.0.0",
-    "react": ">=19.0.0 <20.0.0",
-    "react-dom": ">=19.0.0 <20.0.0"
+    "react": ">=19.2.0 <20.0.0",
+    "react-dom": ">=19.2.0 <20.0.0"
   },
   "packageManager": "bun@1.3.14"
 }
