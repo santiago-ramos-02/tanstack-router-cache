@@ -5,7 +5,7 @@
 In non-production environments, diagnostics are available at:
 
 ```ts
-window.__TANSTACK_ROUTER_CACHE_DEBUG__
+window.__TANSTACK_ROUTER_CACHE_DEBUG__;
 ```
 
 ## Debug API

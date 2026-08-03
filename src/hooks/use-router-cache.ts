@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import type { CachedRouteData } from "../contexts/router-cache";
 import { useRouterCacheContext } from "../contexts/router-cache";
 import { normalizeCachedRoutePathname } from "../pathname";
@@ -14,13 +16,18 @@ export function useRouterCache() {
 
   const update = useUpdate();
 
-  useEventListener({
-    on: {
-      activeChange: () => {
-        update();
+  const events = useMemo(
+    () => ({
+      on: {
+        activeChange: () => {
+          update();
+        },
       },
-    },
-  });
+    }),
+    [update]
+  );
+
+  useEventListener(events);
 
   const destroy = (pathname: string | string[]) => {
     const pathnames = Array.isArray(pathname) ? pathname : [pathname];

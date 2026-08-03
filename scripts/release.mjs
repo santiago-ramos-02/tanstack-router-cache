@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const root = resolve(import.meta.dirname, "..");
 process.chdir(root);
 
-const stableVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+const stableVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u;
 const publishWorkflow = "publish.yml";
 const githubRepository = "santiago-ramos-02/tanstack-router-cache";
 const publishRunLookupAttempts = 12;
@@ -152,7 +151,7 @@ function verifyNpmVersion(packageName, version) {
 }
 
 function readPackageJson() {
-  return JSON.parse(readFileSync("package.json", "utf8"));
+  return JSON.parse(readFileSync("package.json", "utf-8"));
 }
 
 function writePackageJson(packageJson) {
@@ -299,7 +298,7 @@ function findPublishRunId(tagName) {
 }
 
 function read(file, args) {
-  return execFileSync(file, args, { encoding: "utf8" }).trim();
+  return execFileSync(file, args, { encoding: "utf-8" }).trim();
 }
 
 function readIfSuccessful(file, args) {

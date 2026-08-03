@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+
 import type { CachedRoutes } from "../contexts/router-cache";
 
 const DYNAMIC_SEGMENT_PATTERNS = [
@@ -6,15 +7,7 @@ const DYNAMIC_SEGMENT_PATTERNS = [
   /^[0-9a-f]{8,}$/iu,
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu,
 ] as const;
-type RouterCacheDebugSnapshot = {
-  cachedRoutePathnames: string[];
-  dynamicLookingRouteCount: number;
-  dynamicLookingRoutePathnames: string[];
-  hiddenCachedRouteCount: number;
-  hiddenContainerCount: number;
-  totalCachedRouteCount: number;
-  visiblePathname: string;
-};
+type RouterCacheDebugSnapshot = ReturnType<typeof buildSnapshot>;
 
 type RouterCacheDebugApi = {
   getSnapshot: () => RouterCacheDebugSnapshot;
@@ -25,7 +18,7 @@ type RouterCacheDebugApi = {
 };
 
 declare global {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: Window must be extended through interface merging.
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- Window extensions require declaration merging.
   interface Window {
     __TANSTACK_ROUTER_CACHE_DEBUG__?: RouterCacheDebugApi;
   }
@@ -57,11 +50,8 @@ function countHiddenContainers() {
   ).length;
 }
 
-function buildSnapshot(
-  cachedRoutes: CachedRoutes,
-  visiblePathname: string
-): RouterCacheDebugSnapshot {
-  const cachedRoutePathnames = Object.keys(cachedRoutes).sort((a, b) =>
+function buildSnapshot(cachedRoutes: CachedRoutes, visiblePathname: string) {
+  const cachedRoutePathnames = Object.keys(cachedRoutes).toSorted((a, b) =>
     a.localeCompare(b)
   );
   const dynamicLookingRoutePathnames = cachedRoutePathnames.filter(
@@ -87,15 +77,17 @@ function getDebugWindow() {
 }
 
 function isProduction() {
-  const environment = (
-    globalThis as typeof globalThis & {
-      process?: {
-        env?: {
-          NODE_ENV?: string;
-        };
-      };
-    }
-  ).process?.env?.NODE_ENV;
+  const processValue = Reflect.get(globalThis, "process");
+  if (typeof processValue !== "object" || processValue === null) {
+    return false;
+  }
+
+  const environmentValue = Reflect.get(processValue, "env");
+  if (typeof environmentValue !== "object" || environmentValue === null) {
+    return false;
+  }
+
+  const environment = Reflect.get(environmentValue, "NODE_ENV");
 
   return environment === "production";
 }

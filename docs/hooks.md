@@ -141,10 +141,10 @@ function NavigationProgress() {
 
 Returns:
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `activeNavigation` | `RouteCacheNavigationStart | null` | The current cached navigation, if one is in progress. |
-| `lastCompletedNavigation` | `RouteCacheNavigationComplete | null` | Timing data for the most recent completed cached navigation. |
+| Field                     | Type                          | Description |
+| ------------------------- | ----------------------------- | ----------- |
+| `activeNavigation`        | `RouteCacheNavigationStart    | null`       | The current cached navigation, if one is in progress.        |
+| `lastCompletedNavigation` | `RouteCacheNavigationComplete | null`       | Timing data for the most recent completed cached navigation. |
 
 `RouteCacheNavigationStart`:
 
@@ -155,13 +155,13 @@ Returns:
 
 `RouteCacheNavigationComplete`:
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `pathname` | `string` | Cached route pathname that completed. |
-| `startedAt` | `number` | Start timestamp from the matching navigation. |
+| Field       | Type     | Description                                      |
+| ----------- | -------- | ------------------------------------------------ |
+| `pathname`  | `string` | Cached route pathname that completed.            |
+| `startedAt` | `number` | Start timestamp from the matching navigation.    |
 | `visibleAt` | `number` | Timestamp after the cached route became visible. |
-| `paintedAt` | `number` | Timestamp after the next animation frame. |
-| `duration` | `number` | `paintedAt - startedAt`. |
+| `paintedAt` | `number` | Timestamp after the next animation frame.        |
+| `duration`  | `number` | `paintedAt - startedAt`.                         |
 
 ## `useRouteCacheErrorBoundary`
 
@@ -184,4 +184,3 @@ function useRouteCacheErrorBoundary(pathname?: string): void;
 ```
 
 If `pathname` is omitted, the hook uses the current route pathname.
-

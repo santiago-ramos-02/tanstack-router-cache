@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import type {
   ActivityMode,
   RouteCacheNavigationComplete,
@@ -41,7 +42,9 @@ class RouterCacheEvent {
     cachedNavigationStart: new Set<EventHandler<"cachedNavigationStart">>(),
   };
 
-  private constructor() {}
+  private constructor() {
+    /* empty */
+  }
 
   static getInstance() {
     if (!RouterCacheEvent.instance) {

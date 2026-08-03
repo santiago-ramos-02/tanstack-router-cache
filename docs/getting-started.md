@@ -89,24 +89,27 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-In that example, `staleTime`, `preloadStaleTime`, and `gcTime` are TanStack
-Router route options. `maxAge` is the route-cache view lifetime; after that age
-the cached view is not restored and the live route renders again.
-`effectMode: "keep-alive"` keeps ordinary component effects mounted while the
-retained route is hidden.
+In that example, `staleTime`, `preloadStaleTime`, and `gcTime` are TanStack Router route options. `maxAge` is the route-cache view lifetime; after that age the cached view is not restored and the live route renders again. `effectMode: "keep-alive"` keeps ordinary component effects mounted while the retained route is hidden.
 
-The default `effectMode: "pause"` uses React Activity. Local state and DOM are
-preserved, but React cleans up effects while the route is hidden and starts them
-again when it becomes visible.
+### 3. Choose hidden effect behavior
 
-Use `"keep-alive"` only when effects must survive navigation, such as a
-component-level data loader that should not refetch and flash its loading state
-when the user returns. Timers, subscriptions, and requests continue in the
-background in this mode.
+The default `effectMode: "pause"` uses React Activity. Local state and DOM are preserved, but React cleans up effects when the route is hidden and starts them again when it becomes visible. This is a good default for timers, subscriptions, and expensive background work.
 
-### 3. Pause route work while hidden
+Use `effectMode: "keep-alive"` when ordinary component effects must survive navigation, such as a component-level data loader that should not refetch and flash its loading state when the user returns:
 
-Existing `useEffect` calls still work. Use `useRouteCacheEffect` when an effect should run only while the cached route is visible.
+```tsx
+export const Route = createFileRoute("/customers")({
+  ...defineRouteCache({
+    effectMode: "keep-alive",
+    maxAge: 10 * 60_000,
+  }),
+  component: CustomersPage,
+});
+```
+
+Hidden effects continue running in this mode. The route DOM is hidden, inert, and excluded from the accessibility tree.
+
+Use `useRouteCacheEffect` for individual work that should still run only while the cached route is visible:
 
 ```tsx
 import { useRouteCacheEffect } from "tanstack-router-cache";
@@ -127,6 +130,8 @@ function CustomersPage() {
 ```
 
 Use `useRouteCacheActive` when child components need a boolean active state instead of an effect.
+
+For TanStack Start SSR, the retained cache remains client-side. If you use RSC, keep `RouterCacheProvider`, `RouterCacheOutlet`, and the package hooks inside a client component boundary.
 
 ## Basic setup
 
@@ -167,6 +172,7 @@ declare module "@tanstack/react-router" {
     routeCache?:
       | boolean
       | {
+          effectMode?: "pause" | "keep-alive";
           maxAge?: number;
         };
   }
@@ -184,12 +190,13 @@ export const Route = createFileRoute("/reports")({
 });
 ```
 
-Use an object when the retained route view should expire independently from TanStack Router's loader cache:
+Use an object when the retained route view should expire independently from TanStack Router's loader cache or keep effects mounted while hidden:
 
 ```tsx
 export const Route = createFileRoute("/reports")({
   staticData: {
     routeCache: {
+      effectMode: "keep-alive",
       maxAge: 5 * 60_000,
     },
   },

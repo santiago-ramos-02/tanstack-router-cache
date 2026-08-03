@@ -4,6 +4,7 @@ import {
   useRouteCacheActivity,
   useRouteCacheEffect,
 } from "tanstack-router-cache";
+
 import { StatusMetric } from "../components/status-metric";
 import {
   ACTIVITY_LOG_LIMIT,
@@ -42,7 +43,7 @@ function createInitialDraftState(
 
 function draftReducer(state: DraftState, action: DraftAction): DraftState {
   switch (action.type) {
-    case "activity":
+    case "activity": {
       return {
         ...state,
         activity: [createActivityEntry(action.label), ...state.activity].slice(
@@ -50,18 +51,25 @@ function draftReducer(state: DraftState, action: DraftAction): DraftState {
           ACTIVITY_LOG_LIMIT
         ),
       };
-    case "notes":
+    }
+    case "notes": {
       return { ...state, notes: action.value };
-    case "owner":
+    }
+    case "owner": {
       return { ...state, owner: action.value };
-    case "priority":
+    }
+    case "priority": {
       return { ...state, priority: action.value };
-    case "tick":
+    }
+    case "tick": {
       return { ...state, visibleSeconds: state.visibleSeconds + 1 };
-    case "title":
+    }
+    case "title": {
       return { ...state, title: action.value };
-    default:
+    }
+    default: {
       return state;
+    }
   }
 }
 

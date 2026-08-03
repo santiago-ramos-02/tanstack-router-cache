@@ -1,4 +1,5 @@
 import { RouterCacheOutlet, RouterCacheProvider } from "tanstack-router-cache";
+
 import { CachePanel } from "./components/cache-panel";
 import { NavigationLink } from "./components/navigation-link";
 

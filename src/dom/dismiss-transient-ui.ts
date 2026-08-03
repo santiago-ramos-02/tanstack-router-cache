@@ -87,7 +87,7 @@ function getOrCreateRouteState(
 
 function getHoveredElements(documentObject: Document) {
   try {
-    return Array.from(documentObject.querySelectorAll(":hover")).reverse();
+    return [...documentObject.querySelectorAll(":hover")].toReversed();
   } catch {
     return [];
   }
@@ -97,9 +97,7 @@ function getOwnedExternalElements(documentObject: Document, pathname: string) {
   const documentState = getOrCreateDocumentState(documentObject);
   const routeState = getOrCreateRouteState(documentState, pathname);
 
-  return Array.from(routeState.ownedElements).filter(
-    (element) => element.isConnected
-  );
+  return [...routeState.ownedElements].filter((element) => element.isConnected);
 }
 
 function dispatchEscapeKeyboardEvent(
@@ -116,8 +114,6 @@ function dispatchEscapeKeyboardEvent(
       cancelable: true,
       code: "Escape",
       key: "Escape",
-      keyCode: 27,
-      which: 27,
     })
   );
 }
@@ -207,7 +203,7 @@ function getTrackableElementsFromNode(node: Node): HTMLElement[] {
   }
 
   if (node instanceof DocumentFragment) {
-    return Array.from(node.children).flatMap((child) =>
+    return [...node.children].flatMap((child) =>
       child instanceof HTMLElement ? [child] : []
     );
   }
@@ -245,12 +241,14 @@ function handleDomMutations(
     untrackRemovedNode(removedNode, state);
   });
 
-  if (!state.visiblePathname) {
+  const { visiblePathname } = state;
+
+  if (!visiblePathname) {
     return;
   }
 
   forEachAddedNode(mutations, (addedNode) => {
-    trackAddedNode(addedNode, state.visiblePathname as string, state);
+    trackAddedNode(addedNode, visiblePathname, state);
   });
 }
 
@@ -359,7 +357,7 @@ function untrackRemovedNode(node: Node, state: DocumentTransientUiState) {
   }
 
   for (const routeState of state.routes.values()) {
-    for (const element of Array.from(routeState.ownedElements)) {
+    for (const element of routeState.ownedElements) {
       if (node === element || node.contains(element)) {
         untrackElement(routeState, state, element);
       }
@@ -373,7 +371,7 @@ function hideOwnedExternalElements(documentObject: Document, pathname: string) {
     pathname
   );
 
-  for (const element of Array.from(routeState.ownedElements)) {
+  for (const element of routeState.ownedElements) {
     if (!isElementConnectedOutsideRouterCacheContainer(element)) {
       routeState.ownedElements.delete(element);
       routeState.hiddenElements.delete(element);
@@ -403,7 +401,7 @@ function showOwnedExternalElements(documentObject: Document, pathname: string) {
     pathname
   );
 
-  for (const [element] of Array.from(routeState.hiddenElements)) {
+  for (const [element] of routeState.hiddenElements) {
     if (!element.isConnected) {
       routeState.hiddenElements.delete(element);
       routeState.ownedElements.delete(element);
@@ -457,13 +455,13 @@ export function dismissTransientUi(
   initializeTransientUiTracking(document);
 
   const hoveredElements = getHoveredElements(document);
-  const hoverExitTargets = Array.from(
-    new Set([
+  const hoverExitTargets = [
+    ...new Set([
       ...hoveredElements,
       ...getOwnedExternalElements(document, pathname),
-    ])
-  );
-  const activeElement = document.activeElement;
+    ]),
+  ];
+  const { activeElement } = document;
   const activeElementBelongsToHoveredTree =
     activeElement instanceof Element &&
     hoverExitTargets.some(
@@ -477,6 +475,7 @@ export function dismissTransientUi(
     (container.contains(activeElement) || activeElementBelongsToHoveredTree) &&
     isBlurTarget(activeElement)
   ) {
+    // oxlint-disable-next-line github/no-blur -- The focused element is about to be hidden; restoring focus to it would leave focus in an inert subtree.
     activeElement.blur();
   }
 

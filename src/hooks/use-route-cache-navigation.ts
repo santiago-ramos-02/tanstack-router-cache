@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+
 import type {
   RouteCacheNavigationComplete,
   RouteCacheNavigationStart,
@@ -18,37 +19,44 @@ const INITIAL_STATE: RouteCacheNavigationState = {
 export function useRouteCacheNavigation() {
   const [state, setState] = useState(INITIAL_STATE);
 
-  useEventListener({
-    on: {
-      cachedNavigationStart: (navigation) => {
-        setState((current) => ({
-          ...current,
-          activeNavigation: navigation,
-        }));
-      },
-      cachedNavigationCancel: (navigation) => {
-        setState((current) => {
-          if (current.activeNavigation?.pathname !== navigation.pathname) {
-            return current;
-          }
-
-          return {
+  const events = useMemo(
+    () => ({
+      on: {
+        cachedNavigationStart: (navigation: RouteCacheNavigationStart) => {
+          setState((current) => ({
             ...current,
-            activeNavigation: null,
-          };
-        });
+            activeNavigation: navigation,
+          }));
+        },
+        cachedNavigationCancel: (navigation: RouteCacheNavigationStart) => {
+          setState((current) => {
+            if (current.activeNavigation?.pathname !== navigation.pathname) {
+              return current;
+            }
+
+            return {
+              ...current,
+              activeNavigation: null,
+            };
+          });
+        },
+        cachedNavigationComplete: (
+          navigation: RouteCacheNavigationComplete
+        ) => {
+          setState((current) => ({
+            activeNavigation:
+              current.activeNavigation?.pathname === navigation.pathname
+                ? null
+                : current.activeNavigation,
+            lastCompletedNavigation: navigation,
+          }));
+        },
       },
-      cachedNavigationComplete: (navigation) => {
-        setState((current) => ({
-          activeNavigation:
-            current.activeNavigation?.pathname === navigation.pathname
-              ? null
-              : current.activeNavigation,
-          lastCompletedNavigation: navigation,
-        }));
-      },
-    },
-  });
+    }),
+    []
+  );
+
+  useEventListener(events);
 
   return state;
 }

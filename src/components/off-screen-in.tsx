@@ -1,10 +1,6 @@
-import {
-  Activity,
-  type ReactNode,
-  type RefObject,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import { Activity, useLayoutEffect, useRef } from "react";
+import type { ReactNode, RefObject } from "react";
+
 import {
   dismissTransientUi,
   initializeTransientUiTracking,
@@ -133,16 +129,15 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
       }
     };
 
-    globalThis.addEventListener("scroll", handleScroll, { passive: true });
+    // oxlint-disable-next-line github/prefer-observers -- Exact window scroll coordinates cannot be observed with IntersectionObserver.
+    globalThis.addEventListener("scroll", handleScroll);
     globalThis.addEventListener("wheel", markUserRequestedScroll, {
       passive: true,
     });
     globalThis.addEventListener("touchstart", markUserRequestedScroll, {
       passive: true,
     });
-    globalThis.addEventListener("pointerdown", markUserRequestedScroll, {
-      passive: true,
-    });
+    globalThis.addEventListener("pointerdown", markUserRequestedScroll);
     globalThis.addEventListener("keydown", handleKeyDown);
 
     if (!savedPosition) {
