@@ -143,8 +143,8 @@ Returns:
 
 | Field                     | Type                          | Description |
 | ------------------------- | ----------------------------- | ----------- |
-| `activeNavigation`        | `RouteCacheNavigationStart    | null`       | The current cached navigation, if one is in progress.        |
-| `lastCompletedNavigation` | `RouteCacheNavigationComplete | null`       | Timing data for the most recent completed cached navigation. |
+| `activeNavigation`        | `RouteCacheNavigationStart \| null`       | The current cached navigation, if one is in progress.        |
+| `lastCompletedNavigation` | `RouteCacheNavigationComplete \| null`   | Timing data for the most recent completed cached navigation. |
 
 `RouteCacheNavigationStart`:
 

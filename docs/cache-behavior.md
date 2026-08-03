@@ -24,7 +24,7 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-Use this for component-level loaders or subscriptions that must survive cached navigation. Hidden effects continue running, so prefer the default for work that should stop off screen. `useRouteCacheEffect` can pause selected work in either mode.
+Use this for component-level loaders or subscriptions that must survive cached navigation. Hidden effects continue running, so prefer the default for work that should stop when the route is off-screen. `useRouteCacheEffect` can pause selected work in either mode.
 
 ## Eviction
 

@@ -81,10 +81,16 @@ function isRouterMatchValue(value: unknown): value is RouterMatch {
   );
 }
 
-function normalizeRouterMatches(value: unknown) {
-  return Array.isArray(value)
-    ? value.filter((match: unknown) => isRouterMatchValue(match))
-    : [];
+export function normalizeRouterMatches(value: unknown): RouterMatch[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  if (value.every(isRouterMatchValue)) {
+    return value as RouterMatch[];
+  }
+
+  return value.filter(isRouterMatchValue);
 }
 
 function isRouterSnapshot(
