@@ -3,6 +3,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+
 import { AppShell } from "./app-shell";
 import { RoutePendingPage } from "./components/route-pending-page";
 import { AdvancedOverviewPage } from "./pages/advanced-overview-page";
@@ -173,7 +174,7 @@ export const router = createRouter({
 });
 
 declare module "@tanstack/react-router" {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: TanStack Router registration uses interface merging.
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- TanStack Router uses interface declaration merging.
   interface Register {
     router: typeof router;
   }

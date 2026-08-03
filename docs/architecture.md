@@ -231,11 +231,11 @@ Cached entries with a route `maxAge` are treated as expired when their age excee
 
 The manager tracks three pathnames:
 
-| Name | Meaning |
-| --- | --- |
-| `routerPathname` | Current router location pathname. |
-| `resolvedPathname` | Resolved router location pathname. |
-| `visiblePathname` | Cached pathname that should currently be shown. |
+| Name               | Meaning                                         |
+| ------------------ | ----------------------------------------------- |
+| `routerPathname`   | Current router location pathname.               |
+| `resolvedPathname` | Resolved router location pathname.              |
+| `visiblePathname`  | Cached pathname that should currently be shown. |
 
 ```mermaid
 flowchart TD
@@ -261,10 +261,7 @@ Most of the time, `visiblePathname` is the resolved pathname. During some naviga
 Every ready cached entry is rendered through `OffScreen`.
 
 ```tsx
-<OffScreen
-  effectMode={getRouteCacheEffectMode(route.staticData)}
-  mode={visiblePathname === pathname ? "visible" : "hidden"}
->
+<OffScreen mode={visiblePathname === pathname ? "visible" : "hidden"}>
   <CachedOutlet matchId={route.matchId} routerSnapshot={route.routerSnapshot} />
 </OffScreen>
 ```
@@ -289,9 +286,7 @@ flowchart TD
   mode -- no --> hidden --> dom
 ```
 
-`OffScreen` uses React `Activity` in the default `"pause"` effect mode. In
-`"keep-alive"` mode it hides the retained DOM directly, leaving child effects
-mounted. The wrapping element gets these attributes:
+`OffScreen` uses React `Activity` in the default `"pause"` effect mode. In `"keep-alive"` mode it hides the retained DOM directly, leaving child effects mounted. The wrapping element gets these attributes:
 
 ```html
 <div
@@ -330,9 +325,7 @@ sequenceDiagram
 External elements can opt out of this ownership behavior with:
 
 ```html
-<div data-router-cache-persistent-external="true">
-  ...
-</div>
+<div data-router-cache-persistent-external="true">...</div>
 ```
 
 The package also stores window scroll positions by pathname. When a cached route becomes visible, it restores the saved window scroll position after two animation frames.

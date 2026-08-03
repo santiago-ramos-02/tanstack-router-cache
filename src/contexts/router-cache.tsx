@@ -1,3 +1,5 @@
+/* oxlint-disable react/react-compiler -- This external route cache intentionally reads and updates stable mutable refs rather than rendering from them. */
+
 import type {
   RouterContextProvider,
   StaticDataRouteOption,
@@ -11,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { normalizeCachedRoutePathname } from "../pathname";
 import {
   isCachedRouteStale,
@@ -78,9 +81,7 @@ export type CachedRouteData = {
 };
 
 /** Cached route entries keyed by normalized pathname. */
-export type CachedRoutes = {
-  [key: string]: CachedRouteData;
-};
+export type CachedRoutes = Record<string, CachedRouteData>;
 
 export type RouterCacheContextState = {
   cachedRoutes: CachedRoutes;
@@ -217,7 +218,7 @@ function getEntriesByRouteId(entries: [string, CachedRouteData][]) {
   const entriesByRouteId = new Map<string, [string, CachedRouteData][]>();
 
   for (const entry of entries) {
-    const routeId = entry[1].routeId;
+    const { routeId } = entry[1];
 
     if (!routeId) {
       continue;
@@ -247,7 +248,7 @@ function markEntriesForDeletion(
 
   const evictableEntries = entries
     .filter(([pathname]) => !protectedKeys.has(pathname))
-    .sort(sortCachedRouteEntries);
+    .toSorted(sortCachedRouteEntries);
 
   let remainingExcess = excessEntryCount;
 
@@ -334,7 +335,7 @@ function applyCachedRouteLimits(
   const nextRoutes = { ...routes };
 
   for (const pathname of keysToDelete) {
-    delete nextRoutes[pathname];
+    Reflect.deleteProperty(nextRoutes, pathname);
   }
 
   return nextRoutes;
@@ -372,7 +373,7 @@ function getNextCachedRoutesState(params: {
     }
 
     const nextState = { ...state };
-    delete nextState[normalizedKey];
+    Reflect.deleteProperty(nextState, normalizedKey);
     return nextState;
   }
 
@@ -464,7 +465,7 @@ function RouterCacheProviderScope({
       for (const key of keys) {
         const normalizedKey = normalizeCachedRoutePathname(key);
         if (Object.hasOwn(newState, normalizedKey)) {
-          delete newState[normalizedKey];
+          Reflect.deleteProperty(newState, normalizedKey);
           changed = true;
         }
       }
@@ -512,7 +513,7 @@ function RouterCacheProviderScope({
       }
 
       const nextState = { ...state };
-      delete nextState[normalizedPathname];
+      Reflect.deleteProperty(nextState, normalizedPathname);
       return nextState;
     });
   }, []);
@@ -529,7 +530,7 @@ function RouterCacheProviderScope({
         }
 
         const nextState = { ...state };
-        delete nextState[normalizedPathname];
+        Reflect.deleteProperty(nextState, normalizedPathname);
         return nextState;
       }
 

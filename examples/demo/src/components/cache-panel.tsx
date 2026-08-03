@@ -19,7 +19,7 @@ export function CachePanel() {
     .flatMap(([pathname, route]) =>
       route.ready && route.routerSnapshot ? [pathname] : []
     )
-    .sort((a, b) => a.localeCompare(b));
+    .toSorted((a, b) => a.localeCompare(b));
 
   return (
     <aside aria-label="Saved page controls" className="inspector">

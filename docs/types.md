@@ -4,6 +4,7 @@
 
 ```ts
 export type ActivityMode = "visible" | "hidden";
+
 export type RouteCacheEffectMode = "pause" | "keep-alive";
 
 export type RouteCacheStaticOption =

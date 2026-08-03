@@ -6,10 +6,8 @@ const RESET_FORM_DELAY_MS = 900;
 const SAVED_DRAFT_DELAY_MS = 1500;
 const SAVED_LIST_DELAY_MS = 1600;
 const RESET_PAGE_DELAY_MS = 1000;
+const REQUEST_ID_LENGTH = 6;
 
-const requestIdRadix = 36;
-const requestIdStart = 2;
-const requestIdEnd = 8;
 const timeFormatter = new Intl.DateTimeFormat("en", {
   hour: "2-digit",
   minute: "2-digit",
@@ -17,10 +15,7 @@ const timeFormatter = new Intl.DateTimeFormat("en", {
 });
 
 function createLoadId(prefix: string) {
-  return `${prefix}-${Math.random()
-    .toString(requestIdRadix)
-    .slice(requestIdStart, requestIdEnd)
-    .toUpperCase()}`;
+  return `${prefix}-${crypto.randomUUID().slice(0, REQUEST_ID_LENGTH).toUpperCase()}`;
 }
 
 function formatPreparedAt() {

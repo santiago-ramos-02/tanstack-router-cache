@@ -11,8 +11,7 @@
   --focus: #f59e0b;
   color: var(--ink);
   background: var(--wash);
-  font-family:
-    "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Aptos", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   line-height: 1.5;
   text-rendering: geometricPrecision;
@@ -661,8 +660,10 @@ a:focus-visible {
 }
 
 .toolbar {
-  grid-template-columns:
-    minmax(220px, 1fr) minmax(160px, 190px) repeat(4, minmax(110px, 140px));
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, 190px) repeat(
+      4,
+      minmax(110px, 140px)
+    );
   align-items: end;
 }
 

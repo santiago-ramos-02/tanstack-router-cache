@@ -2,32 +2,35 @@
   "name": "tanstack-router-cache",
   "version": "0.1.13",
   "description": "Route view caching for TanStack Router.",
-  "type": "module",
+  "keywords": [
+    "react",
+    "route-cache",
+    "route-state",
+    "router",
+    "tanstack-router",
+    "view-cache"
+  ],
+  "homepage": "https://github.com/santiago-ramos-02/tanstack-router-cache#readme",
+  "bugs": {
+    "url": "https://github.com/santiago-ramos-02/tanstack-router-cache/issues"
+  },
   "license": "MIT",
   "author": "Santiago",
-  "homepage": "https://github.com/santiago-ramos-02/tanstack-router-cache#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/santiago-ramos-02/tanstack-router-cache.git"
   },
-  "bugs": {
-    "url": "https://github.com/santiago-ramos-02/tanstack-router-cache/issues"
-  },
-  "packageManager": "bun@1.3.14",
-  "keywords": [
-    "react",
-    "tanstack-router",
-    "router",
-    "route-cache",
-    "route-state",
-    "view-cache"
-  ],
   "files": [
     "dist",
     "docs",
     "LICENSE",
     "README.md"
   ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -35,9 +38,6 @@
       "require": "./dist/index.cjs"
     }
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
@@ -46,30 +46,30 @@
     "build": "bun run clean && rolldown -c && tsc",
     "typecheck": "tsc --noEmit",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",
-    "lint": "biome lint src scripts .github/scripts rolldown.config.ts --skip=lint/performance/noBarrelFile --skip=lint/style/useConsistentTypeDefinitions --skip=lint/suspicious/noConsole",
-    "lint:fix": "biome lint src scripts .github/scripts rolldown.config.ts --write --skip=lint/performance/noBarrelFile --skip=lint/style/useConsistentTypeDefinitions --skip=lint/suspicious/noConsole",
+    "lint": "oxlint src scripts .github/scripts rolldown.config.ts",
+    "lint:fix": "oxlint --fix src scripts .github/scripts rolldown.config.ts",
     "check": "bun run lint && bun run typecheck && bun run build && bun run pack:dry-run",
     "pack:dry-run": "npm pack --dry-run",
     "release": "node scripts/release.mjs",
     "prepack": "bun run build",
     "prepublishOnly": "bun run lint && bun run typecheck"
   },
-  "sideEffects": false,
+  "dependencies": {},
+  "devDependencies": {
+    "@tanstack/react-router": "^1.170.18",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "oxlint": "^1.76.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "rolldown": "^1.2.1",
+    "typescript": "^7.0.2"
+  },
   "peerDependencies": {
     "@tanstack/react-router": ">=1.168.14 <2.0.0",
     "react": ">=19.0.0 <20.0.0",
     "react-dom": ">=19.0.0 <20.0.0"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "@biomejs/biome": "2.5.5",
-    "@tanstack/react-router": "^1.170.18",
-    "@types/node": "^26.1.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "rolldown": "^1.2.0",
-    "typescript": "^7.0.2"
-  }
+  "packageManager": "bun@1.3.14"
 }

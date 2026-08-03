@@ -1,5 +1,6 @@
 import { useLocation } from "@tanstack/react-router";
 import { useLayoutEffect, useMemo, useRef } from "react";
+
 import { useOptionalRouteCacheActivity } from "../contexts/route-cache-activity";
 import { normalizeCachedRoutePathname } from "../pathname";
 import { useEventListener } from "./use-event-listener";

@@ -1,5 +1,6 @@
 import type { DependencyList, EffectCallback } from "react";
 import { useCallback, useEffect, useRef } from "react";
+
 import { useRouteCacheActivity } from "./use-route-cache-activity";
 
 function areDependenciesEqual(

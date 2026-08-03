@@ -3,31 +3,28 @@
 - Pathnames are normalized before being stored or removed.
 - `maxEntries={0}` disables caching and clears existing cached routes.
 - Hidden cached routes are rendered in off-screen containers and receive active-change events.
-- Hidden route effects pause by default. Set `effectMode: "keep-alive"` when they must remain mounted.
 - Cached dynamic routes can grow memory use if every id is retained; use `maxEntriesPerRouteId` for those routes.
 - If a cached destination is restored with an outdated href, the package navigates back to the cached href with `replace: true` and `resetScroll: false`.
 - A route can use `staticData.routeCache.maxAge` to stop restoring an old retained view after a fixed age.
+- Hidden route effects pause by default. Set `effectMode: "keep-alive"` when they must remain mounted.
 
-## Hidden route effects
+## Hidden effects
 
-The default `effectMode: "pause"` wraps retained content in React Activity.
-React preserves state and DOM while the route is hidden, cleans up its effects,
-and starts those effects again when the route becomes visible.
+The default `effectMode: "pause"` wraps retained content in React Activity. React preserves state and DOM while the route is hidden, cleans up its effects, and starts those effects again when the route becomes visible.
 
-`effectMode: "keep-alive"` hides the retained DOM without React Activity, so
-ordinary component effects remain mounted:
+`effectMode: "keep-alive"` hides the retained DOM without React Activity, so ordinary component effects remain mounted:
 
 ```tsx
 export const Route = createFileRoute("/customers")({
   ...defineRouteCache({
     effectMode: "keep-alive",
+    maxAge: 10 * 60_000,
   }),
   component: CustomersPage,
 });
 ```
 
-Keep-alive routes continue timers, subscriptions, and requests in the
-background. Use the default pause mode unless that behavior is intentional.
+Use this for component-level loaders or subscriptions that must survive cached navigation. Hidden effects continue running, so prefer the default for work that should stop off screen. `useRouteCacheEffect` can pause selected work in either mode.
 
 ## Eviction
 

@@ -2,7 +2,6 @@
 
 import type { RouteCacheStaticOption } from "./types";
 
-// biome-ignore lint/performance/noBarrelFile: this file is the package's public entry point.
 export { RouterCacheOutlet } from "./components/router-cache-outlet";
 export type { CachedRouteData, CachedRoutes } from "./contexts/router-cache";
 export { RouterCacheProvider } from "./contexts/router-cache";
@@ -16,7 +15,7 @@ export { defineRouteCache } from "./route-cache-static-data";
 export type * from "./types";
 
 declare module "@tanstack/react-router" {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: TanStack Router static data is extended through interface merging.
+  // oxlint-disable-next-line typescript/consistent-type-definitions -- TanStack extends this contract through declaration merging.
   interface StaticDataRouteOption {
     /**
      * Enables retained route-view caching for this route.

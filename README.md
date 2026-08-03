@@ -18,11 +18,11 @@ bun add tanstack-router-cache
 
 Your app should already install these packages:
 
-| Package | Supported versions |
-| --- | --- |
-| `react` | `>=19.0.0 <20.0.0` |
-| `react-dom` | Match your React version. |
-| `@tanstack/react-router` | `>=1.168.14 <2.0.0` |
+| Package                  | Supported versions        |
+| ------------------------ | ------------------------- |
+| `react`                  | `>=19.0.0 <20.0.0`        |
+| `react-dom`              | Match your React version. |
+| `@tanstack/react-router` | `>=1.168.14 <2.0.0`       |
 
 ## Usage
 
@@ -51,9 +51,7 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-Routes pause effects while hidden by default. For component-level loaders or
-subscriptions that must stay mounted, use
-`defineRouteCache({ effectMode: "keep-alive" })`.
+Routes pause effects while hidden by default. For component-level loaders that must not restart on return navigation, use `defineRouteCache({ effectMode: "keep-alive" })`.
 
 For the full API, see [docs](./docs).
 

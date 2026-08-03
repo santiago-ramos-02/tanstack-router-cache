@@ -1,3 +1,5 @@
+/* oxlint-disable react/react-compiler -- This external route cache intentionally reads stable mutable refs during render to preserve cached element identity. */
+
 import type {
   ParsedLocation,
   StaticDataRouteOption,
@@ -11,6 +13,7 @@ import {
 } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 import { useEffect, useLayoutEffect, useRef } from "react";
+
 import { useRouterCacheContext } from "../contexts/router-cache";
 import { useEventListener } from "../hooks/use-event-listener";
 import { useRouterCacheDebug } from "../hooks/use-router-cache-debug";
@@ -27,7 +30,8 @@ import { shouldRestoreCachedHref } from "./restore-cached-href";
 
 type RouterSnapshot = ComponentProps<typeof CachedOutlet>["routerSnapshot"];
 type RouterLocation = ParsedLocation;
-type RouterMatch = ReturnType<typeof useMatches>[number] & {
+type RouterMatch = {
+  [key: string]: unknown;
   _nonReactive?: Record<string, unknown>;
   id: string;
   pathname?: string;
@@ -48,20 +52,10 @@ type MatchStore = SnapshotStore<RouterMatch> & {
   routeId: string;
 };
 type RouterSnapshotInput = {
-  matches: Array<RouterMatch | undefined>;
+  matches: (RouterMatch | undefined)[];
   router: ReturnType<typeof useRouter>;
   routerLocation: RouterLocation;
   routerResolvedLocation?: RouterLocation;
-};
-type RouterSnapshotData = {
-  matches: RouterMatch[];
-  state: ReturnType<
-    ReturnType<typeof useRouter>["stores"]["__store"]["get"]
-  > & {
-    location: RouterLocation;
-    matches: RouterMatch[];
-    resolvedLocation?: RouterLocation;
-  };
 };
 type RouterSnapshotUpdater = (input: RouterSnapshotInput) => void;
 type SetCachedRoutes = ReturnType<
@@ -78,6 +72,27 @@ type PendingCachedNavigation = {
   startedAt: number;
 };
 
+function isRouterMatchValue(value: unknown): value is RouterMatch {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof Reflect.get(value, "id") === "string" &&
+    typeof Reflect.get(value, "routeId") === "string"
+  );
+}
+
+function normalizeRouterMatches(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((match: unknown) => isRouterMatchValue(match))
+    : [];
+}
+
+function isRouterSnapshot(
+  value: unknown
+): value is NonNullable<RouterSnapshot> {
+  return typeof value === "object" && value !== null;
+}
+
 const LIVE_ROUTER_METHODS = [
   "buildLocation",
   "commitLocation",
@@ -92,7 +107,7 @@ const routerSnapshotUpdaters = new WeakMap<
   RouterSnapshotUpdater
 >();
 
-function createSnapshotStore<T>(value: T): SnapshotStore<T> {
+function createSnapshotStore<T>(value: T) {
   let currentValue = value;
   const listeners = new Set<(value: T) => void>();
 
@@ -119,7 +134,7 @@ function createSnapshotStore<T>(value: T): SnapshotStore<T> {
           ? () => {
               listeners.delete(listener);
             }
-          : () => undefined,
+          : () => {},
       };
     },
   };
@@ -130,7 +145,7 @@ function createRouterSnapshotData({
   router,
   routerLocation,
   routerResolvedLocation,
-}: RouterSnapshotInput): RouterSnapshotData {
+}: RouterSnapshotInput) {
   const snapshotMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
     const nextMatch = snapshotMatch(match, routerLocation);
 
@@ -152,7 +167,7 @@ function createRouterSnapshotData({
   };
 }
 
-function createMatchStore(match: RouterMatch): MatchStore {
+function createMatchStore(match: RouterMatch) {
   return Object.assign(createSnapshotStore(match), {
     routeId: match.routeId,
   });
@@ -193,22 +208,22 @@ function getLiveRouterMethodDescriptors(router: ReturnType<typeof useRouter>) {
   );
 }
 
-function toRouterLocation(location: RouterLocation): RouterLocation {
+function toRouterLocation(location: RouterLocation) {
   return { ...location };
 }
 
 function isReadyCachedRoute(route: ReadyCachedRoute | undefined) {
   return Boolean(
     route &&
-      isRouteCacheEnabled(route.staticData) &&
-      !isCachedRouteStale(route) &&
-      route.ready &&
-      route.matchId &&
-      route.routerSnapshot
+    isRouteCacheEnabled(route.staticData) &&
+    !isCachedRouteStale(route) &&
+    route.ready &&
+    route.matchId &&
+    route.routerSnapshot
   );
 }
 
-function hasErroredRouteMatch(matches: Array<RouterMatch | undefined>) {
+function hasErroredRouteMatch(matches: (RouterMatch | undefined)[]) {
   return matches.some((match) => match?.status === "error");
 }
 
@@ -226,7 +241,7 @@ function hasCurrentRouterMatchError({
   resolvedPathname,
   routerPathname,
 }: {
-  matches: Array<RouterMatch | undefined>;
+  matches: (RouterMatch | undefined)[];
   resolvedPathname: string;
   routerPathname: string;
 }) {
@@ -242,7 +257,7 @@ function hasCurrentRouteError({
   erroredRouteCounts: ReturnType<
     typeof useRouterCacheContext
   >["erroredRouteCounts"];
-  matches: Array<RouterMatch | undefined>;
+  matches: (RouterMatch | undefined)[];
   resolvedPathname: string;
   routerPathname: string;
 }) {
@@ -289,10 +304,10 @@ function isCurrentUnmanagedCachedRoute(
 ) {
   return Boolean(
     route &&
-      isRouteCacheEnabled(route.staticData) &&
-      route.ready &&
-      route.routerSnapshot &&
-      route.href === routerHref
+    isRouteCacheEnabled(route.staticData) &&
+    route.ready &&
+    route.routerSnapshot &&
+    route.href === routerHref
   );
 }
 
@@ -310,7 +325,7 @@ function syncReadyCachedRoute({
   staticData,
 }: {
   matchId?: string;
-  matches: Array<RouterMatch | undefined>;
+  matches: (RouterMatch | undefined)[];
   routeId?: string;
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
   routerLocation: RouterLocation;
@@ -375,7 +390,7 @@ function syncCachedRouteState({
   isCurrentMatchResolved: boolean;
   isCurrentRouteErrored: boolean;
   matchId?: string;
-  matches: Array<RouterMatch | undefined>;
+  matches: (RouterMatch | undefined)[];
   routeId?: string;
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
   routerLocation: RouterLocation;
@@ -425,7 +440,7 @@ function syncCachedRouteState({
   }
 }
 
-function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
+function createRouterSnapshot(input: RouterSnapshotInput) {
   const { router, routerLocation, routerResolvedLocation } = input;
   const snapshotData = createRouterSnapshotData(input);
   const snapshotMatches = snapshotData.matches;
@@ -477,9 +492,9 @@ function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
       }
       return cached;
     },
-    setMatches: () => undefined,
-    setPending: () => undefined,
-    setCached: () => undefined,
+    setMatches: () => {},
+    setPending: () => {},
+    setCached: () => {},
   };
 
   const updateSnapshot: RouterSnapshotUpdater = (nextInput) => {
@@ -537,7 +552,11 @@ function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
     }
   };
 
-  const routerSnapshot: RouterSnapshot = Object.create(router);
+  const routerSnapshotCandidate: unknown = Object.create(router);
+  if (!isRouterSnapshot(routerSnapshotCandidate)) {
+    throw new TypeError("Unable to create the router cache snapshot.");
+  }
+  const routerSnapshot = routerSnapshotCandidate;
   Object.defineProperties(routerSnapshot, {
     stores: {
       value: stores,
@@ -549,7 +568,7 @@ function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
       value: (matchId: string) => matchStores.get(matchId)?.get(),
     },
     updateMatch: {
-      value: () => undefined,
+      value: () => {},
     },
     ...getLiveRouterMethodDescriptors(router),
   });
@@ -560,7 +579,7 @@ function createRouterSnapshot(input: RouterSnapshotInput): RouterSnapshot {
 }
 
 function getRouterCacheStaticData(
-  childMatches: Array<RouterMatch | undefined>,
+  childMatches: (RouterMatch | undefined)[],
   isCurrentMatchResolved: boolean
 ) {
   if (!isCurrentMatchResolved) {
@@ -582,7 +601,7 @@ function restoreCachedHref(router: ReturnType<typeof useRouter>, href: string) {
       replace: true,
       resetScroll: false,
     })
-    .catch(() => undefined);
+    .catch(() => {});
 }
 
 function renderCachedRoute({
@@ -729,8 +748,8 @@ function RouteCacheManager() {
   );
   const destinationRoute = cachedRoutes[routerPathname];
 
-  const matches = useMatches();
-  const childMatches = useChildMatches();
+  const matches = normalizeRouterMatches(useMatches());
+  const childMatches = normalizeRouterMatches(useChildMatches());
   const router = useRouter();
   const currentMatch = matches.length ? matches.at(-1) : undefined;
   const outletRootMatch = childMatches.length ? childMatches[0] : currentMatch;
@@ -763,7 +782,6 @@ function RouteCacheManager() {
     ? routerPathname
     : undefined;
   const previousPathname = previousPathnameRef.current;
-  const _previousHref = previousHrefRef.current;
   const shouldRestoreDestinationHref = shouldRestoreCachedHref({
     cachedHref: destinationRoute?.href,
     currentHref: routerHref,

@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouteCacheEffect } from "tanstack-router-cache";
+
 import { StatusMetric } from "../components/status-metric";
 import { PROGRESS_MAX, SECOND_MS } from "../data";
 
@@ -20,6 +21,7 @@ export function SavedListPage() {
   const [category, setCategory] = useState<DemoCategoryFilter>("All");
   const [markedIds, setMarkedIds] = useState<string[]>([]);
   const [visibleSeconds, setVisibleSeconds] = useState(0);
+  const markedIdSet = useMemo(() => new Set(markedIds), [markedIds]);
   const normalizedQuery = query.trim().toLowerCase();
   const filteredRecords = savedList.records.filter((record) => {
     const matchesCategory = category === "All" || record.category === category;
@@ -126,14 +128,14 @@ export function SavedListPage() {
               />
               <button
                 className={
-                  markedIds.includes(record.id)
+                  markedIdSet.has(record.id)
                     ? "mark-button mark-button-active"
                     : "mark-button"
                 }
                 onClick={() => toggleMarked(record.id)}
                 type="button"
               >
-                {markedIds.includes(record.id) ? "Marked" : "Mark"}
+                {markedIdSet.has(record.id) ? "Marked" : "Mark"}
               </button>
             </article>
           ))

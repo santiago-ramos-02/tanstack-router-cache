@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const packageJson = JSON.parse(
-  readFileSync(new URL("../../package.json", import.meta.url), "utf8")
+  readFileSync(new URL("../../package.json", import.meta.url), "utf-8")
 );
 const expectedTag = `v${packageJson.version}`;
 const actualTag = process.argv[2];
