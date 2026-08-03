@@ -86,11 +86,13 @@ export function normalizeRouterMatches(value: unknown): RouterMatch[] {
     return [];
   }
 
-  if (value.every(isRouterMatchValue)) {
-    return value as RouterMatch[];
+  for (let index = 0; index < value.length; index += 1) {
+    if (!isRouterMatchValue(value[index])) {
+      return value.filter(isRouterMatchValue);
+    }
   }
 
-  return value.filter(isRouterMatchValue);
+  return value as RouterMatch[];
 }
 
 function isRouterSnapshot(

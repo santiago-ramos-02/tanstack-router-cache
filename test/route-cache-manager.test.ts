@@ -20,4 +20,15 @@ describe("normalizeRouterMatches", () => {
     expect(normalized).toEqual([{ id: "root", routeId: "root" }]);
     expect(normalized).not.toBe(matches);
   });
+
+  test("filters holes from sparse match arrays", () => {
+    const matches: unknown[] = [];
+    matches.length = 2;
+    matches[1] = { id: "root", routeId: "root" };
+
+    const normalized = normalizeRouterMatches(matches);
+
+    expect(normalized).toEqual([{ id: "root", routeId: "root" }]);
+    expect(normalized).not.toBe(matches);
+  });
 });
