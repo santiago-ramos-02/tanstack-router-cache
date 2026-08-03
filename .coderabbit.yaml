@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+
+reviews:
+  profile: chill
+
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    - "!**/dist/**"
+    - "!**/node_modules/**"
+    - "!**/coverage/**"
+    - "!**/*.lock"
+
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        Review this as a public TypeScript/React library for TanStack Router.
+        Prioritize:
+        - Public API and type compatibility for downstream consumers.
+        - Correct React lifecycle behavior, cleanup, and effect handling.
+        - TanStack Router navigation, route matching, cache invalidation, and error-boundary behavior.
+        - DOM safety, SSR compatibility, accessibility, and memory/resource leaks.
+        - Tests for regressions and edge cases when behavior changes.
+        Avoid flagging intentional lifecycle behavior as a bug without tracing the relevant navigation and cache state.
+
+    - path: "examples/**"
+      instructions: |
+        Treat the example app as executable documentation.
+        Check that examples use the public package API, remain buildable, and demonstrate behavior that matches the documented contract.
+
+    - path: "docs/**"
+      instructions: |
+        Check documentation for accuracy against the exported API and current TanStack Router behavior.
+        Flag broken links, stale version requirements, and examples that would not compile.
