@@ -72,8 +72,8 @@ export type CachedRouteData = {
   routeId?: string;
   /** Static data from the deepest cache-enabled route match. */
   staticData: StaticDataRouteOption;
-  /** TanStack Router match id rendered by the cached outlet. */
-  matchId?: string;
+  /** Route id of the outlet root match rendered by the cached outlet. */
+  rootRouteId?: string;
   /** Router snapshot used to keep the cached route tree isolated while hidden. */
   routerSnapshot?: RouterSnapshot;
   /** Whether the cached route has a complete snapshot and can be restored. */
@@ -168,7 +168,7 @@ function isSameCachedRouteData(
   return (
     current.routeId === next.routeId &&
     current.href === next.href &&
-    current.matchId === next.matchId &&
+    current.rootRouteId === next.rootRouteId &&
     current.ready === next.ready &&
     current.routerSnapshot === next.routerSnapshot &&
     shallowEqualRouteStaticData(current.staticData, next.staticData)

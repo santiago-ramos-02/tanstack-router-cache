@@ -35,7 +35,7 @@ type CachedRouteData = {
   lastVisibleAt?: number;
   routeId?: string;
   staticData: StaticDataRouteOption;
-  matchId?: string;
+  rootRouteId?: string;
   routerSnapshot?: RouterSnapshot;
   ready?: boolean;
 };

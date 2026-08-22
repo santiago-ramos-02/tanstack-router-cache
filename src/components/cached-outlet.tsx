@@ -2,15 +2,15 @@ import { Match, RouterContextProvider } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
 
 type CachedOutletProps = {
-  matchId: string;
+  routeId: string;
   routerSnapshot: ComponentProps<typeof RouterContextProvider>["router"];
 };
 
 export default function CachedOutlet(props: Readonly<CachedOutletProps>) {
-  const { matchId, routerSnapshot } = props;
+  const { routeId, routerSnapshot } = props;
   return (
     <RouterContextProvider router={routerSnapshot}>
-      <Match matchId={matchId} />
+      <Match routeId={routeId} />
     </RouterContextProvider>
   );
 }

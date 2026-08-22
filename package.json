@@ -57,18 +57,18 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@tanstack/react-router": "^1.170.18",
-    "@types/node": "^26.1.2",
+    "@tanstack/react-router": "^1.170.31",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "oxlint": "^1.76.0",
+    "oxlint": "^1.79.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "rolldown": "^1.2.1",
+    "rolldown": "^1.2.5",
     "typescript": "^7.0.2"
   },
   "peerDependencies": {
-    "@tanstack/react-router": ">=1.168.14 <2.0.0",
+    "@tanstack/react-router": ">=1.170.31 <2.0.0",
     "react": ">=19.2.0 <20.0.0",
     "react-dom": ">=19.2.0 <20.0.0"
   },

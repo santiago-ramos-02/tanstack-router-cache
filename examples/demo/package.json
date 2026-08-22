@@ -12,17 +12,17 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "@tanstack/react-router": "1.170.11",
-    "react": "19.2.7",
-    "react-dom": "19.2.7",
-    "tanstack-router-cache": "0.1.5"
+    "@tanstack/react-router": "1.170.31",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "tanstack-router-cache": "^0.1.13"
   },
   "devDependencies": {
-    "@types/react": "19.2.16",
-    "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.2",
-    "oxlint": "^1.76.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react": "6.1.0",
+    "oxlint": "^1.79.0",
     "typescript": "7.0.2",
-    "vite": "8.0.16"
+    "vite": "8.2.2"
   }
 }

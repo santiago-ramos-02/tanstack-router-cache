@@ -111,7 +111,7 @@ type CachedRouteData = {
   lastVisibleAt?: number;
   routeId?: string;
   staticData: StaticDataRouteOption;
-  matchId?: string;
+  rootRouteId?: string;
   routerSnapshot?: RouterSnapshot;
   ready?: boolean;
 };
@@ -125,7 +125,7 @@ classDiagram
     lastVisibleAt
     routeId
     staticData
-    matchId
+    rootRouteId
     routerSnapshot
     ready
   }
@@ -148,7 +148,7 @@ classDiagram
 | `lastVisibleAt` | Last time the entry became visible. Primary eviction timestamp. |
 | `routeId` | TanStack route id. Used by `maxEntriesPerRouteId`. |
 | `staticData` | Route static data. The route is cacheable when `routeCache` is `true` or an options object. |
-| `matchId` | Match id used to render the cached route with TanStack Router's `Match`. |
+| `rootRouteId` | Route id of the outlet root match rendered by the cached outlet. |
 | `routerSnapshot` | Router-like object with isolated snapshot stores used by the cached route tree. |
 | `ready` | Marks that the route has a complete snapshot and can be rendered from cache. |
 
@@ -167,7 +167,7 @@ flowchart TD
   liveMethods["Bound live methods"]
   routerSnapshot["Router snapshot"]
   cachedOutlet["CachedOutlet"]
-  match["Match by cached matchId"]
+  match["Match by cached rootRouteId"]
 
   liveRouter --> matches
   liveRouter --> location
@@ -188,7 +188,7 @@ When the cached entry is refreshed, the cache manager updates those snapshot sto
 
 ```tsx
 <RouterContextProvider router={routerSnapshot}>
-  <Match matchId={matchId} />
+  <Match routeId={rootRouteId} />
 </RouterContextProvider>
 ```
 
@@ -262,7 +262,7 @@ Every ready cached entry is rendered through `OffScreen`.
 
 ```tsx
 <OffScreen mode={visiblePathname === pathname ? "visible" : "hidden"}>
-  <CachedOutlet matchId={route.matchId} routerSnapshot={route.routerSnapshot} />
+  <CachedOutlet routeId={route.rootRouteId} routerSnapshot={route.routerSnapshot} />
 </OffScreen>
 ```
 
