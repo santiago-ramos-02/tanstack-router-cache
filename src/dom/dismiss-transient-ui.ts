@@ -6,8 +6,8 @@ type HoverExitEventType =
 
 type OwnedExternalElementSnapshot = {
   ariaHidden: string | null;
-  display: string;
-  displayPriority: string;
+  /** The display this module replaced; null when React hid the element. */
+  display: { priority: string; value: string } | null;
   inert: boolean;
 };
 
@@ -279,11 +279,13 @@ function restoreOwnedExternalElement(
     return;
   }
 
-  element.style.setProperty(
-    "display",
-    snapshot.display,
-    snapshot.displayPriority
-  );
+  if (snapshot.display) {
+    element.style.setProperty(
+      "display",
+      snapshot.display.value,
+      snapshot.display.priority
+    );
+  }
 
   if (snapshot.ariaHidden === null) {
     element.removeAttribute("aria-hidden");
@@ -365,6 +367,20 @@ function untrackRemovedNode(node: Node, state: DocumentTransientUiState) {
   }
 }
 
+/**
+ * React 19.3+ hides the portals of a hidden `<Activity>` with
+ * `display: none !important` during commit, before this module's layout
+ * effects run, and restores them itself when the Activity shows again.
+ * Snapshotting that display would restore React's hiding on show, so React
+ * keeps owning it; this module still applies aria-hidden and inert.
+ */
+function isHiddenByReact(element: HTMLElement) {
+  return (
+    element.style.getPropertyValue("display") === "none" &&
+    element.style.getPropertyPriority("display") === "important"
+  );
+}
+
 function hideOwnedExternalElements(documentObject: Document, pathname: string) {
   const routeState = getOrCreateRouteState(
     getOrCreateDocumentState(documentObject),
@@ -382,14 +398,21 @@ function hideOwnedExternalElements(documentObject: Document, pathname: string) {
       continue;
     }
 
+    const hiddenByReact = isHiddenByReact(element);
     routeState.hiddenElements.set(element, {
       ariaHidden: element.getAttribute("aria-hidden"),
-      display: element.style.getPropertyValue("display"),
-      displayPriority: element.style.getPropertyPriority("display"),
+      display: hiddenByReact
+        ? null
+        : {
+            priority: element.style.getPropertyPriority("display"),
+            value: element.style.getPropertyValue("display"),
+          },
       inert: element.inert,
     });
 
-    element.style.setProperty("display", "none", "important");
+    if (!hiddenByReact) {
+      element.style.setProperty("display", "none", "important");
+    }
     element.setAttribute("aria-hidden", "true");
     element.inert = true;
   }

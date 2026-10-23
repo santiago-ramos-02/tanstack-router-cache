@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { PageHeader } from "../components/page-header";
 import { StatusMetric } from "../components/status-metric";
 
 const routeApi = getRouteApi("/basic/cached-form");
@@ -12,17 +13,14 @@ export function BasicCachedFormPage() {
 
   return (
     <section className="page-stack">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Cached form</p>
-          <h2>This form stays available.</h2>
-          <p>
-            Type here, visit the reset form, then return. The values stay in
-            place while the page is cached.
-          </p>
-        </div>
-        <span className="active-badge">Saved page</span>
-      </header>
+      <PageHeader
+        badge="Saved page"
+        eyebrow="Cached form"
+        title="This form stays available."
+      >
+        Type here, visit the reset form, then return. The values stay in place
+        while the page is cached.
+      </PageHeader>
 
       <section aria-label="Cached form" className="form-panel compact-form">
         <div className="metric-grid">

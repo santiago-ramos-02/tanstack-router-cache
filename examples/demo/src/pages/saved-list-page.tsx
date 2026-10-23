@@ -2,6 +2,7 @@ import { getRouteApi, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useRouteCacheEffect } from "tanstack-router-cache";
 
+import { PageHeader } from "../components/page-header";
 import { StatusMetric } from "../components/status-metric";
 import { PROGRESS_MAX, SECOND_MS } from "../data";
 
@@ -59,17 +60,14 @@ export function SavedListPage() {
 
   return (
     <section className="page-stack catalog-page">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Saved list</p>
-          <h2>The filtered list stays ready.</h2>
-          <p>
-            Search, filter, mark a row, scroll down, and return to the same
-            working view.
-          </p>
-        </div>
-        <span className="active-badge">Saved list</span>
-      </header>
+      <PageHeader
+        badge="Saved list"
+        eyebrow="Saved list"
+        title="The filtered list stays ready."
+      >
+        Search, filter, mark a row, scroll down, and return to the same working
+        view.
+      </PageHeader>
 
       <section aria-label="Saved list filters" className="toolbar">
         <label>

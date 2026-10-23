@@ -1,6 +1,6 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
@@ -133,7 +133,8 @@ function watchPublishWorkflow(tagName) {
 
 function verifyNpmVersion(packageName, version) {
   for (let attempt = 0; attempt < npmVersionLookupAttempts; attempt += 1) {
-    const publishedVersion = readIfSuccessful("npm", [
+    const publishedVersion = readIfSuccessful("bun", [
+      "pm",
       "view",
       `${packageName}@${version}`,
       "version",
@@ -218,6 +219,15 @@ function formatVersion(version) {
 }
 
 function ensureMainBranch() {
+  // The package also lives inside the MappStock monorepo, which syncs it to
+  // the mirror. Releasing from there would commit, tag and push MappStock's
+  // own main, so a release runs only where the package is the repository root.
+  const top = read("git", ["rev-parse", "--show-toplevel"]);
+
+  if (realpathSync(top) !== realpathSync(root)) {
+    fail(`Releases run from a clone of ${githubRepository}, not from ${top}.`);
+  }
+
   const branch = read("git", ["branch", "--show-current"]);
 
   if (branch !== "main") {

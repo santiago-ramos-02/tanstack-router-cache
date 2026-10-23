@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023"],
+    "strict": true,
+    "skipLibCheck": true,
+    "emitDeclarationOnly": true,
+    "outDir": "node_modules/.cache/tsconfig-node",
+    "types": ["node"]
+  },
+  "include": ["rolldown.config.ts", "vitest.config.ts"]
+}

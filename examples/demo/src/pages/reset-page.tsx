@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { PageHeader } from "../components/page-header";
 import { StatusMetric } from "../components/status-metric";
 import { SECOND_MS } from "../data";
 
@@ -24,17 +25,15 @@ export function ResetPage() {
 
   return (
     <section className="page-stack">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Reset page</p>
-          <h2>This page resets each time.</h2>
-          <p>
-            Use this page as the control check when you want to compare a cached
-            page with a normal reset.
-          </p>
-        </div>
-        <span className="active-badge muted">Resets</span>
-      </header>
+      <PageHeader
+        badge="Resets"
+        eyebrow="Reset page"
+        muted
+        title="This page resets each time."
+      >
+        Use this page as the control check when you want to compare a cached
+        page with a normal reset.
+      </PageHeader>
 
       <section aria-label="Reset page form" className="form-panel compact-form">
         <div className="metric-grid">

@@ -1,20 +1,18 @@
 import { Link } from "@tanstack/react-router";
 
+import { PageHeader } from "../components/page-header";
 import { ValueCard } from "../components/value-card";
 
 export function BasicOverviewPage() {
   return (
     <section className="page-stack">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Guided demo</p>
-          <h2>A cached form beside a reset form.</h2>
-          <p>
-            Use this pair when you want to show the difference in a few clicks:
-            one page keeps local state, the other starts clean.
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="Guided demo"
+        title="A cached form beside a reset form."
+      >
+        Use this pair when you want to show the difference in a few clicks: one
+        page keeps local state, the other starts clean.
+      </PageHeader>
 
       <div className="comparison-grid">
         <ValueCard

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 
 import { normalizeRouterMatches } from "../src/components/route-cache-manager";
 
@@ -10,10 +10,7 @@ describe("normalizeRouterMatches", () => {
   });
 
   test("filters invalid entries from a mixed match array", () => {
-    const matches = [
-      { id: "root", routeId: "root" },
-      { id: "invalid" },
-    ];
+    const matches = [{ id: "root", routeId: "root" }, { id: "invalid" }];
 
     const normalized = normalizeRouterMatches(matches);
 

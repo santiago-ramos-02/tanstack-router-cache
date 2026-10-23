@@ -5,6 +5,7 @@ import {
   useRouteCacheEffect,
 } from "tanstack-router-cache";
 
+import { PageHeader } from "../components/page-header";
 import { StatusMetric } from "../components/status-metric";
 import {
   ACTIVITY_LOG_LIMIT,
@@ -100,17 +101,14 @@ export function SavedDraftPage() {
 
   return (
     <section className="page-stack">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Saved draft</p>
-          <h2>The draft keeps its place.</h2>
-          <p>
-            Leave with an unfinished action list, then come back to the same
-            notes, priority, timer, and activity trail.
-          </p>
-        </div>
-        <span className="active-badge">Saved page</span>
-      </header>
+      <PageHeader
+        badge="Saved page"
+        eyebrow="Saved draft"
+        title="The draft keeps its place."
+      >
+        Leave with an unfinished action list, then come back to the same notes,
+        priority, timer, and activity trail.
+      </PageHeader>
 
       <div className="split-layout">
         <section aria-label="Saved draft form" className="form-panel">

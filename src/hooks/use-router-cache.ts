@@ -19,9 +19,7 @@ export function useRouterCache() {
   const events = useMemo(
     () => ({
       on: {
-        activeChange: () => {
-          update();
-        },
+        activeChange: update,
       },
     }),
     [update]

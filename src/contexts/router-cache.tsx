@@ -5,14 +5,7 @@ import type {
   StaticDataRouteOption,
 } from "@tanstack/react-router";
 import type { ComponentProps, ReactNode } from "react";
-import {
-  createContext,
-  use,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { createContext, use, useCallback, useMemo, useState } from "react";
 
 import { normalizeCachedRoutePathname } from "../pathname";
 import {
@@ -425,20 +418,19 @@ function RouterCacheProviderScope({
   maxEntries,
   maxEntriesPerRouteId,
 }: Readonly<RouterCacheProviderScopeProps>) {
-  const cacheConfigRef = useRef<RouterCacheConfig>({
-    maxEntries: normalizeLimit(maxEntries),
-    maxEntriesPerRouteId: normalizeLimit(maxEntriesPerRouteId),
-  });
-  const initialCachedRoutesRef = useRef<CachedRoutes | null>(null);
-  if (initialCachedRoutesRef.current === null) {
-    initialCachedRoutesRef.current = applyCachedRouteLimits(
+  const cacheConfig = useMemo<RouterCacheConfig>(
+    () => ({
+      maxEntries: normalizeLimit(maxEntries),
+      maxEntriesPerRouteId: normalizeLimit(maxEntriesPerRouteId),
+    }),
+    [maxEntries, maxEntriesPerRouteId]
+  );
+  const [cachedRoutes, setCachedRoutes] = useState<CachedRoutes>(() =>
+    applyCachedRouteLimits(
       filterRouterCacheRoutes(defaultCachedRoutes),
-      cacheConfigRef.current,
+      cacheConfig,
       new Set()
-    );
-  }
-  const [cachedRoutes, setCachedRoutes] = useState<CachedRoutes>(
-    () => initialCachedRoutesRef.current ?? EMPTY_CACHED_ROUTES
+    )
   );
   const [erroredRouteCounts, setErroredRouteCounts] = useState<
     Record<string, number>
@@ -448,14 +440,14 @@ function RouterCacheProviderScope({
     (key: string, value: CachedRouteData) => {
       setCachedRoutes((state) =>
         getNextCachedRoutesState({
-          cacheConfig: cacheConfigRef.current,
+          cacheConfig,
           key,
           state,
           value,
         })
       );
     },
-    []
+    [cacheConfig]
   );
 
   const deleteCachedRoutes = useCallback((keys: string[]) => {

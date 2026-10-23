@@ -18,11 +18,11 @@ bun add tanstack-router-cache
 
 Your app should already install these packages:
 
-| Package                  | Supported versions        |
-| ------------------------ | ------------------------- |
-| `react`                  | `>=19.2.0 <20.0.0`        |
-| `react-dom`              | `>=19.2.0 <20.0.0`        |
-| `@tanstack/react-router` | `>=1.168.14 <2.0.0`       |
+| Package                  | Supported versions  |
+| ------------------------ | ------------------- |
+| `react`                  | `>=19.2.0 <20.0.0`  |
+| `react-dom`              | `>=19.2.0 <20.0.0`  |
+| `@tanstack/react-router` | `>=1.168.14 <2.0.0` |
 
 ## Usage
 

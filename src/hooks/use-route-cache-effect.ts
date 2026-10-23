@@ -1,82 +1,28 @@
+/* oxlint-disable react-hooks/exhaustive-deps, react/rule-suppression -- This hook intentionally forwards the caller-provided dependency list to useEffect, which cannot be statically analyzed. */
 import type { DependencyList, EffectCallback } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { useRouteCacheActivity } from "./use-route-cache-activity";
-
-function areDependenciesEqual(
-  previousDeps: DependencyList | undefined,
-  nextDeps: DependencyList
-) {
-  if (previousDeps?.length !== nextDeps.length) {
-    return false;
-  }
-
-  for (let index = 0; index < nextDeps.length; index += 1) {
-    if (!Object.is(previousDeps[index], nextDeps[index])) {
-      return false;
-    }
-  }
-
-  return true;
-}
+import { useRouteCacheActive } from "./use-route-cache-active";
 
 export function useRouteCacheEffect(
   activeCallback: EffectCallback,
   deps: DependencyList = []
 ) {
-  const returnValue = useRef<ReturnType<EffectCallback> | undefined>(undefined);
-  const isActiveRef = useRef(true);
-  const previousCallbackRef = useRef<EffectCallback | undefined>(undefined);
-  const previousDepsRef = useRef<DependencyList | undefined>(undefined);
+  const isActive = useRouteCacheActive();
+  const callbackRef = useRef(activeCallback);
 
+  useLayoutEffect(() => {
+    callbackRef.current = activeCallback;
+  }, [activeCallback]);
+
+  // Activity semantics: the effect is mounted only while the route is
+  // visible. Hiding runs the cleanup, showing re-runs the latest callback,
+  // and dependency changes that happen while hidden apply once on show.
   useEffect(() => {
-    const callbackChanged = previousCallbackRef.current !== activeCallback;
-    const dependenciesChanged = !areDependenciesEqual(
-      previousDepsRef.current,
-      deps
-    );
-
-    if (!(callbackChanged || dependenciesChanged || !isActiveRef.current)) {
+    if (!isActive) {
       return;
     }
 
-    previousCallbackRef.current = activeCallback;
-    previousDepsRef.current = deps;
-
-    isActiveRef.current = true;
-    returnValue.current?.();
-    returnValue.current = activeCallback();
-  });
-
-  useEffect(
-    () => () => {
-      returnValue.current?.();
-    },
-    []
-  );
-
-  const handleActivityChange = useCallback(
-    (active: boolean) => {
-      if (active) {
-        if (isActiveRef.current) {
-          return;
-        }
-
-        isActiveRef.current = true;
-        returnValue.current = activeCallback();
-        return;
-      }
-
-      if (!isActiveRef.current) {
-        return;
-      }
-
-      isActiveRef.current = false;
-      returnValue.current?.();
-      returnValue.current = undefined;
-    },
-    [activeCallback]
-  );
-
-  useRouteCacheActivity(handleActivityChange);
+    return callbackRef.current();
+  }, [isActive, ...deps]);
 }

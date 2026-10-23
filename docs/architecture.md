@@ -262,7 +262,10 @@ Every ready cached entry is rendered through `OffScreen`.
 
 ```tsx
 <OffScreen mode={visiblePathname === pathname ? "visible" : "hidden"}>
-  <CachedOutlet routeId={route.rootRouteId} routerSnapshot={route.routerSnapshot} />
+  <CachedOutlet
+    routeId={route.rootRouteId}
+    routerSnapshot={route.routerSnapshot}
+  />
 </OffScreen>
 ```
 
@@ -322,11 +325,15 @@ sequenceDiagram
   Tracker->>Portal: Restore previous DOM state
 ```
 
+From React 19.3, a hidden `<Activity>` also hides the portals rendered inside it (`display: none !important`) during commit and shows them again itself. The tracker leaves `display` to React for those elements and still applies `aria-hidden` and `inert`, so restoring a route never re-applies React's hiding. In `keep-alive` effect mode there is no `<Activity>`, and the tracker manages `display` too.
+
 External elements can opt out of this ownership behavior with:
 
 ```html
 <div data-router-cache-persistent-external="true">...</div>
 ```
+
+Use it for UI that lives outside the cached routes but portals into the document while a route is visible, such as global navigation menus. A portal rendered from inside a cached route belongs to that route: React 19.3 hides it with the route regardless of this attribute.
 
 The package also stores window scroll positions by pathname. When a cached route becomes visible, it restores the saved window scroll position after two animation frames.
 

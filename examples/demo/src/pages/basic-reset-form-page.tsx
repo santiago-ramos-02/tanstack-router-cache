@@ -1,6 +1,7 @@
 import { getRouteApi, Link } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { PageHeader } from "../components/page-header";
 import { StatusMetric } from "../components/status-metric";
 
 const routeApi = getRouteApi("/basic/reset-form");
@@ -11,17 +12,15 @@ export function BasicResetFormPage() {
 
   return (
     <section className="page-stack">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Reset form</p>
-          <h2>This page resets after you leave.</h2>
-          <p>
-            Use it as the control page. Add text, visit the cached form, then
-            come back and this page has a new load id.
-          </p>
-        </div>
-        <span className="active-badge muted">Resets</span>
-      </header>
+      <PageHeader
+        badge="Resets"
+        eyebrow="Reset form"
+        muted
+        title="This page resets after you leave."
+      >
+        Use it as the control page. Add text, visit the cached form, then come
+        back and this page has a new load id.
+      </PageHeader>
 
       <section aria-label="Reset form" className="form-panel compact-form">
         <div className="metric-grid">

@@ -29,7 +29,6 @@ import OffScreen from "./off-screen";
 import { shouldRestoreCachedHref } from "./restore-cached-href";
 
 type RouterSnapshot = ComponentProps<typeof CachedOutlet>["routerSnapshot"];
-type RouterLocation = ParsedLocation;
 type RouterMatch = {
   [key: string]: unknown;
   _nonReactive?: Record<string, unknown>;
@@ -52,8 +51,8 @@ type MatchStore = SnapshotStore<RouterMatch | undefined>;
 type RouterSnapshotInput = {
   matches: (RouterMatch | undefined)[];
   router: ReturnType<typeof useRouter>;
-  routerLocation: RouterLocation;
-  routerResolvedLocation?: RouterLocation;
+  routerLocation: ParsedLocation;
+  routerResolvedLocation?: ParsedLocation;
 };
 type RouterSnapshotUpdater = (input: RouterSnapshotInput) => void;
 type SetCachedRoutes = ReturnType<
@@ -208,10 +207,6 @@ function getLiveRouterMethodDescriptors(router: ReturnType<typeof useRouter>) {
   );
 }
 
-function toRouterLocation(location: RouterLocation) {
-  return { ...location };
-}
-
 function isReadyCachedRoute(route: ReadyCachedRoute | undefined) {
   return Boolean(
     route &&
@@ -273,7 +268,7 @@ function isRouterMatch(match: RouterMatch | undefined): match is RouterMatch {
 
 function snapshotMatch(
   match: RouterMatch | undefined,
-  routerLocation: RouterLocation
+  routerLocation: ParsedLocation
 ): RouterMatch | undefined {
   if (!isRouterMatch(match)) {
     return;
@@ -328,9 +323,9 @@ function syncReadyCachedRoute({
   matches: (RouterMatch | undefined)[];
   routeId?: string;
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
-  routerLocation: RouterLocation;
+  routerLocation: ParsedLocation;
   router: ReturnType<typeof useRouter>;
-  routerResolvedLocation?: RouterLocation;
+  routerResolvedLocation?: ParsedLocation;
   routerHref?: string;
   routerPathname: string;
   setCachedRoutes: SetCachedRoutes;
@@ -393,9 +388,9 @@ function syncCachedRouteState({
   matches: (RouterMatch | undefined)[];
   routeId?: string;
   route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
-  routerLocation: RouterLocation;
+  routerLocation: ParsedLocation;
   router: ReturnType<typeof useRouter>;
-  routerResolvedLocation?: RouterLocation;
+  routerResolvedLocation?: ParsedLocation;
   routerHref?: string;
   routerPathname: string;
   deleteCachedRoutes: DeleteCachedRoutes;
@@ -505,11 +500,10 @@ function createRouterSnapshot(input: RouterSnapshotInput) {
     stores.__store.set(nextData.state);
   };
 
-  const routerSnapshotCandidate: unknown = Object.create(router);
-  if (!isRouterSnapshot(routerSnapshotCandidate)) {
+  const routerSnapshot: unknown = Object.create(router);
+  if (!isRouterSnapshot(routerSnapshot)) {
     throw new TypeError("Unable to create the router cache snapshot.");
   }
-  const routerSnapshot = routerSnapshotCandidate;
   Object.defineProperties(routerSnapshot, {
     stores: {
       value: stores,
@@ -676,19 +670,16 @@ function RouteCacheManager() {
   const previousRouteCacheModesRef = useRef<Map<string, ActivityMode> | null>(
     null
   );
-  previousRouteCacheModesRef.current ??= new Map();
   const previousVisiblePathnameRef = useRef<string | undefined>(undefined);
 
   const routerLocation = useRouterState({
-    select: (state) => toRouterLocation(state.location),
+    select: (state) => ({ ...state.location }),
   });
   const routerHref = routerLocation.href;
   const routerPathname = normalizeCachedRoutePathname(routerLocation.pathname);
   const routerResolvedLocation = useRouterState({
     select: (state) =>
-      state.resolvedLocation
-        ? toRouterLocation(state.resolvedLocation)
-        : undefined,
+      state.resolvedLocation ? { ...state.resolvedLocation } : undefined,
   });
   const resolvedPathname = normalizeCachedRoutePathname(
     routerResolvedLocation?.pathname ?? routerPathname
@@ -730,6 +721,7 @@ function RouteCacheManager() {
   const bypassCachedPathname = isCurrentRouteErrored
     ? routerPathname
     : undefined;
+  /* oxlint-disable react/refs -- Reading the previous pathname during render is intentional: the restore decision must be evaluated for this exact commit, before the effect below advances the ref. */
   const previousPathname = previousPathnameRef.current;
   const shouldRestoreDestinationHref = shouldRestoreCachedHref({
     cachedHref: destinationRoute?.href,
@@ -738,6 +730,7 @@ function RouteCacheManager() {
     isRouteCacheEnabled: isRouteCacheEnabled(destinationRoute?.staticData),
     previousPathname,
   });
+  /* oxlint-enable react/refs */
 
   useLayoutEffect(() => {
     const stalePathnames = getStaleCachedRoutePathnames(cachedRoutes);
@@ -816,7 +809,7 @@ function RouteCacheManager() {
 
     pendingCachedNavigationRef.current = nextNavigation;
     eventListener.emit("cachedNavigationStart", nextNavigation);
-  }, [destinationRoute, eventListener, routerPathname]);
+  }, [destinationRoute, eventListener, routerPathname, previousPathnameRef]);
 
   useLayoutEffect(() => {
     previousRouteCacheModesRef.current ??= new Map();
@@ -892,7 +885,7 @@ function RouteCacheManager() {
   useEffect(() => {
     previousPathnameRef.current = routerPathname;
     previousHrefRef.current = routerHref;
-  }, [routerHref, routerPathname]);
+  }, [routerHref, routerPathname, previousPathnameRef]);
 
   const shouldRenderLiveOutlet =
     routerPathname === bypassCachedPathname ||

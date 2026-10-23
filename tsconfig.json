@@ -8,10 +8,13 @@
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "strict": true,
     "skipLibCheck": true,
+    // The build emits these declarations with tsc: bun check does not emit, and
+    // rolldown's isolated declarations need explicit return types on every export.
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
 }
