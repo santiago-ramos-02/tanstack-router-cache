@@ -12,5 +12,10 @@
     "outDir": "node_modules/.cache/tsconfig-node",
     "types": ["node"]
   },
-  "include": ["rolldown.config.ts", "vitest.config.ts"]
+  "include": [
+    "rolldown.config.ts",
+    "vitest.config.ts",
+    "scripts",
+    ".github/scripts"
+  ]
 }

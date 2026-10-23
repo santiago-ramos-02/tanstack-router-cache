@@ -14,7 +14,21 @@ const publishRunLookupIntervalMs = 5000;
 const npmVersionLookupAttempts = 24;
 const npmVersionLookupIntervalMs = 5000;
 const sharedBufferBytes = 4;
-const requestedVersion = process.argv[2];
+const requestedVersion: string | undefined = process.argv[2];
+
+type Version = [major: number, minor: number, patch: number];
+type PackageJson = Record<string, unknown> & { name: string; version: string };
+
+type Release = {
+  packageName: string;
+  tagName: string;
+  version: string;
+};
+
+type WorkflowRun = {
+  databaseId: number;
+  headBranch: string;
+};
 
 if (!requestedVersion) {
   printUsage();
@@ -23,17 +37,12 @@ if (!requestedVersion) {
 
 releaseVersion(requestedVersion);
 
-function releaseVersion(versionSpec) {
+function releaseVersion(versionSpec: string): void {
   const release = prepareRelease(versionSpec);
   pushRelease(release);
 }
 
-function prepareRelease(versionSpec) {
-  if (!versionSpec) {
-    printUsage();
-    process.exit(1);
-  }
-
+function prepareRelease(versionSpec: string): Release {
   ensureMainBranch();
   ensureCleanTree();
 
@@ -62,7 +71,7 @@ function prepareRelease(versionSpec) {
   };
 }
 
-function pushRelease(release) {
+function pushRelease(release: Release): void {
   ensureMainBranch();
   ensureCleanTree();
 
@@ -93,7 +102,7 @@ function pushRelease(release) {
   verifyNpmVersion(packageName, version);
 }
 
-function createGitHubRelease(tagName) {
+function createGitHubRelease(tagName: string): void {
   if (ghReleaseExists(tagName)) {
     run("gh", [
       "release",
@@ -118,7 +127,7 @@ function createGitHubRelease(tagName) {
   ]);
 }
 
-function watchPublishWorkflow(tagName) {
+function watchPublishWorkflow(tagName: string): void {
   const runId = findPublishRunId(tagName);
 
   run("gh", [
@@ -131,7 +140,7 @@ function watchPublishWorkflow(tagName) {
   ]);
 }
 
-function verifyNpmVersion(packageName, version) {
+function verifyNpmVersion(packageName: string, version: string): void {
   for (let attempt = 0; attempt < npmVersionLookupAttempts; attempt += 1) {
     const publishedVersion = readIfSuccessful("bun", [
       "pm",
@@ -151,36 +160,62 @@ function verifyNpmVersion(packageName, version) {
   fail(`Could not verify ${packageName}@${version} on npm.`);
 }
 
-function readPackageJson() {
-  return JSON.parse(readFileSync("package.json", "utf-8"));
+function isPackageJson(value: unknown): value is PackageJson {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "name" in value &&
+    typeof value.name === "string" &&
+    "version" in value &&
+    typeof value.version === "string"
+  );
 }
 
-function writePackageJson(packageJson) {
+function isWorkflowRun(value: unknown): value is WorkflowRun {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "databaseId" in value &&
+    typeof value.databaseId === "number" &&
+    "headBranch" in value &&
+    typeof value.headBranch === "string"
+  );
+}
+
+function readPackageJson(): PackageJson {
+  const packageJson: unknown = JSON.parse(
+    readFileSync("package.json", "utf-8")
+  );
+
+  if (!isPackageJson(packageJson)) {
+    return fail("package.json needs a name and a version.");
+  }
+
+  return packageJson;
+}
+
+function writePackageJson(packageJson: PackageJson): void {
   writeFileSync("package.json", `${JSON.stringify(packageJson, null, 2)}\n`);
 }
 
-function resolveNextVersion(currentVersion, versionSpec) {
+function resolveNextVersion(
+  currentVersion: string,
+  versionSpec: string
+): string {
   const current = parseVersion(currentVersion);
 
-  if (["major", "minor", "patch"].includes(versionSpec)) {
-    const next = [...current];
+  const [major, minor, patch] = current;
 
-    if (versionSpec === "major") {
-      next[0] += 1;
-      next[1] = 0;
-      next[2] = 0;
-    }
+  if (versionSpec === "major") {
+    return formatVersion([major + 1, 0, 0]);
+  }
 
-    if (versionSpec === "minor") {
-      next[1] += 1;
-      next[2] = 0;
-    }
+  if (versionSpec === "minor") {
+    return formatVersion([major, minor + 1, 0]);
+  }
 
-    if (versionSpec === "patch") {
-      next[2] += 1;
-    }
-
-    return formatVersion(next);
+  if (versionSpec === "patch") {
+    return formatVersion([major, minor, patch + 1]);
   }
 
   const next = parseVersion(versionSpec);
@@ -194,18 +229,22 @@ function resolveNextVersion(currentVersion, versionSpec) {
   return versionSpec;
 }
 
-function parseVersion(version) {
+function parseVersion(version: string): Version {
   const match = stableVersionPattern.exec(version);
 
   if (!match) {
-    fail(`Expected a stable semver version like 0.2.0, received "${version}".`);
+    return fail(
+      `Expected a stable semver version like 0.2.0, received "${version}".`
+    );
   }
 
-  return match.slice(1).map(Number);
+  const [, major, minor, patch] = match;
+
+  return [Number(major), Number(minor), Number(patch)];
 }
 
-function compareVersions(left, right) {
-  for (const index of [0, 1, 2]) {
+function compareVersions(left: Version, right: Version): number {
+  for (const index of [0, 1, 2] as const) {
     if (left[index] !== right[index]) {
       return left[index] - right[index];
     }
@@ -214,11 +253,11 @@ function compareVersions(left, right) {
   return 0;
 }
 
-function formatVersion(version) {
+function formatVersion(version: Version): string {
   return version.join(".");
 }
 
-function ensureMainBranch() {
+function ensureMainBranch(): void {
   // The package also lives inside the MappStock monorepo, which syncs it to
   // the mirror. Releasing from there would commit, tag and push MappStock's
   // own main, so a release runs only where the package is the repository root.
@@ -237,7 +276,7 @@ function ensureMainBranch() {
   }
 }
 
-function ensureCleanTree() {
+function ensureCleanTree(): void {
   const status = read("git", ["status", "--porcelain"]);
 
   if (status) {
@@ -247,7 +286,7 @@ function ensureCleanTree() {
   }
 }
 
-function tagExists(tagName) {
+function tagExists(tagName: string): boolean {
   try {
     execFileSync(
       "git",
@@ -262,7 +301,7 @@ function tagExists(tagName) {
   }
 }
 
-function ghReleaseExists(tagName) {
+function ghReleaseExists(tagName: string): boolean {
   try {
     execFileSync(
       "gh",
@@ -277,9 +316,9 @@ function ghReleaseExists(tagName) {
   }
 }
 
-function findPublishRunId(tagName) {
+function findPublishRunId(tagName: string): string {
   for (let attempt = 0; attempt < publishRunLookupAttempts; attempt += 1) {
-    const runs = JSON.parse(
+    const runs: unknown = JSON.parse(
       read("gh", [
         "run",
         "list",
@@ -293,9 +332,11 @@ function findPublishRunId(tagName) {
         "databaseId,headBranch,status",
       ])
     );
-    const publishRun = runs.find(
-      (workflowRun) => workflowRun.headBranch === tagName
-    );
+    const publishRun = Array.isArray(runs)
+      ? runs
+          .filter(isWorkflowRun)
+          .find((workflowRun) => workflowRun.headBranch === tagName)
+      : undefined;
 
     if (publishRun) {
       return String(publishRun.databaseId);
@@ -304,14 +345,14 @@ function findPublishRunId(tagName) {
     sleep(publishRunLookupIntervalMs);
   }
 
-  fail(`Could not find the ${publishWorkflow} run for ${tagName}.`);
+  return fail(`Could not find the ${publishWorkflow} run for ${tagName}.`);
 }
 
-function read(file, args) {
+function read(file: string, args: string[]): string {
   return execFileSync(file, args, { encoding: "utf-8" }).trim();
 }
 
-function readIfSuccessful(file, args) {
+function readIfSuccessful(file: string, args: string[]): string {
   try {
     return read(file, args);
   } catch {
@@ -319,16 +360,16 @@ function readIfSuccessful(file, args) {
   }
 }
 
-function run(file, args) {
+function run(file: string, args: string[]): void {
   execFileSync(file, args, { stdio: "inherit" });
 }
 
-function fail(message) {
+function fail(message: string): never {
   console.error(message);
   process.exit(1);
 }
 
-function sleep(ms) {
+function sleep(ms: number): void {
   Atomics.wait(
     new Int32Array(new SharedArrayBuffer(sharedBufferBytes)),
     0,
@@ -337,7 +378,7 @@ function sleep(ms) {
   );
 }
 
-function printUsage() {
+function printUsage(): void {
   console.log(`Usage:
   bun run release patch
   bun run release minor

@@ -51,7 +51,7 @@
     "check": "bun run lint && bun run typecheck && bun run test && bun run build && bun run pack:dry-run",
     "test": "vitest run",
     "pack:dry-run": "bun pm pack --dry-run",
-    "release": "bun scripts/release.mjs",
+    "release": "bun scripts/release.ts",
     "prepack": "bun run build",
     "prepublishOnly": "bun run lint && bun run typecheck"
   },

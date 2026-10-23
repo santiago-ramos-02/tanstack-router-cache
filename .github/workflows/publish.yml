@@ -25,7 +25,7 @@ jobs:
         run: bun install
 
       - name: Check release tag
-        run: bun .github/scripts/check-release-tag.mjs "$GITHUB_REF_NAME"
+        run: bun .github/scripts/check-release-tag.ts "$GITHUB_REF_NAME"
 
       - name: Lint
         run: bun run lint
