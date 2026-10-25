@@ -394,6 +394,57 @@ describe("OffScreen", () => {
     expect(globalThis.scrollX).toBe(savedScrollPosition.x);
     expect(globalThis.scrollY).toBe(savedScrollPosition.y);
   });
+
+  it("keeps a first visit at the top instead of the scroll of the page it came from", () => {
+    const animationFrameCallbacks: FrameRequestCallback[] = [];
+    const scrollToSpy = vi
+      .spyOn(globalThis, "scrollTo")
+      .mockImplementation((x, y) => {
+        setWindowScrollPosition(x, y);
+      });
+
+    vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation(
+      (callback) => {
+        animationFrameCallbacks.push(callback);
+        return animationFrameCallbacks.length;
+      }
+    );
+    vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
+
+    // The page navigated from was scrolled down when the new route mounts.
+    setWindowScrollPosition(savedScrollPosition.x, savedScrollPosition.y);
+
+    const { rerender } = render(
+      <OffScreen mode="visible" pathname="/first-visit-test">
+        <button type="button">Inside route</button>
+      </OffScreen>
+    );
+
+    // The router resets the new route to the top.
+    setWindowScrollPosition(0, 0);
+
+    rerender(
+      <OffScreen mode="hidden" pathname="/first-visit-test">
+        <button type="button">Inside route</button>
+      </OffScreen>
+    );
+    rerender(
+      <OffScreen mode="visible" pathname="/first-visit-test">
+        <button type="button">Inside route</button>
+      </OffScreen>
+    );
+
+    while (animationFrameCallbacks.length > 0) {
+      animationFrameCallbacks.shift()?.(performance.now());
+    }
+
+    expect(scrollToSpy).not.toHaveBeenCalledWith(
+      savedScrollPosition.x,
+      savedScrollPosition.y
+    );
+    expect(globalThis.scrollX).toBe(0);
+    expect(globalThis.scrollY).toBe(0);
+  });
 });
 
 describe("OffScreen overlay dismissal", () => {

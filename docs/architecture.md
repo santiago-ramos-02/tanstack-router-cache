@@ -335,7 +335,7 @@ External elements can opt out of this ownership behavior with:
 
 Use it for UI that lives outside the cached routes but portals into the document while a route is visible, such as global navigation menus. A portal rendered from inside a cached route belongs to that route: React 19.3 hides it with the route regardless of this attribute.
 
-The package also stores window scroll positions by pathname. When a cached route becomes visible, it restores the saved window scroll position after two animation frames.
+The package also stores window scroll positions by pathname. When a cached route becomes visible, it restores the saved window scroll position after two animation frames. A route's first visit has no saved position, so it stays where the router puts it, at the top: the window's scroll then still belongs to the page navigated from, and the route records only the scroll that follows.
 
 ```mermaid
 sequenceDiagram

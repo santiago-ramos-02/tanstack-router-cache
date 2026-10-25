@@ -141,8 +141,11 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     globalThis.addEventListener("keydown", handleKeyDown);
 
     if (!savedPosition) {
+      // A first visit starts where the router puts it, at the top. The window
+      // still holds the scroll of the page navigated from, so it is not saved
+      // now: saving it would restore that page's scroll here once the route
+      // turns visible again. Tracking records this route's own scroll.
       startScrollTracking();
-      saveScrollPosition();
       return () => {
         if (scrollTrackingIntervalId !== undefined) {
           globalThis.clearInterval(scrollTrackingIntervalId);
