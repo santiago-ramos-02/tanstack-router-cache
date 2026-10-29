@@ -8,7 +8,7 @@
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "strict": true,
     "skipLibCheck": true,
-    // The build emits these declarations with tsc: bun check does not emit, and
+    // The build emits these declarations with tsrs: bun check does not emit, and
     // rolldown's isolated declarations need explicit return types on every export.
     "declaration": true,
     "emitDeclarationOnly": true,

@@ -44,7 +44,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "build": "bun run clean && rolldown -c && tsc",
+    "build": "bun run clean && rolldown -c && tsrs",
     "typecheck": "bun check --no-script -p tsconfig.json && bun check --no-script -p test/tsconfig.json && bun check --no-script -p tsconfig.node.json",
     "clean": "rm -rf dist",
     "lint": "oxlint src scripts test .github/scripts rolldown.config.ts vitest.config.ts",
@@ -69,7 +69,7 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "rolldown": "^1.2.14",
-    "typescript": "^7.0.2",
+    "tsrs": "0.20.1-ts7.1.0-beta",
     "vitest": "^5.0.5"
   },
   "peerDependencies": {
