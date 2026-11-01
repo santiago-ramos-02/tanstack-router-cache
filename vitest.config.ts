@@ -4,8 +4,22 @@ import { defineConfig } from "vitest/config";
 // production build, which has no act().
 process.env.NODE_ENV = "test";
 
+// CI logs keep each failed test with its error and console output, then the
+// totals. Naming the reporters replaces Vitest's default, so the
+// github-actions one it adds on GitHub is listed too.
+const ciReporting = process.env.CI
+  ? {
+      reporters: [
+        "minimal",
+        ...(process.env.GITHUB_ACTIONS === "true" ? ["github-actions"] : []),
+      ],
+      silent: "passed-only" as const,
+    }
+  : {};
+
 export default defineConfig({
   test: {
+    ...ciReporting,
     environment: "jsdom",
     globals: true,
     include: ["test/**/*.test.{ts,tsx}"],
