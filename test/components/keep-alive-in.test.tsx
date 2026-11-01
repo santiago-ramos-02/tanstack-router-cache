@@ -1,3 +1,4 @@
+import type { RouterEvents } from "@tanstack/react-router";
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -14,12 +15,31 @@ type MockRouterLocation = {
 
 type MockMatch = Record<string, unknown>;
 
+type BeforeNavigateListener = (event: RouterEvents["onBeforeNavigate"]) => void;
+
 type MockRouterState = {
   childMatches: MockMatch[];
   location: MockRouterLocation;
   matches: MockMatch[];
   resolvedLocation: MockRouterLocation;
   router: Record<string, unknown>;
+};
+
+const beforeNavigateListeners = new Set<BeforeNavigateListener>();
+const unsubscribeBeforeNavigate = vi.fn();
+
+// The manager subscribes to router events, so every mock router carries this.
+const routerSubscription = {
+  subscribe: vi.fn((eventType: string, listener: BeforeNavigateListener) => {
+    if (eventType === "onBeforeNavigate") {
+      beforeNavigateListeners.add(listener);
+    }
+
+    return () => {
+      beforeNavigateListeners.delete(listener);
+      unsubscribeBeforeNavigate();
+    };
+  }),
 };
 
 const routerState: MockRouterState = {
@@ -41,14 +61,13 @@ const routerState: MockRouterState = {
       mode: "search",
     },
   },
-  router: {},
+  router: routerSubscription,
 };
 
 type MockCachedRoute = Record<string, unknown>;
 
 type MockRouterCacheContext = {
   cachedRoutes: Record<string, MockCachedRoute>;
-  deleteCachedRoutes: ReturnType<typeof vi.fn>;
   erroredRouteCounts: Record<string, number>;
   releaseErroredRoute: ReturnType<typeof vi.fn>;
   retainErroredRoute: ReturnType<typeof vi.fn>;
@@ -58,7 +77,6 @@ type MockRouterCacheContext = {
 
 const routerCacheContext: MockRouterCacheContext = {
   cachedRoutes: {},
-  deleteCachedRoutes: vi.fn(),
   erroredRouteCounts: {},
   releaseErroredRoute: vi.fn(),
   retainErroredRoute: vi.fn(),
@@ -152,7 +170,6 @@ function createRouterCacheMatch(overrides: Record<string, unknown> = {}) {
 describe("RouteCacheManager", () => {
   beforeEach(() => {
     routerCacheContext.cachedRoutes = {};
-    routerCacheContext.deleteCachedRoutes.mockReset();
     routerCacheContext.erroredRouteCounts = {};
     routerCacheContext.releaseErroredRoute.mockReset();
     routerCacheContext.retainErroredRoute.mockReset();
@@ -176,7 +193,10 @@ describe("RouteCacheManager", () => {
     };
     routerState.matches = [createRouterCacheMatch()];
     routerState.childMatches = [createRouterCacheMatch()];
-    routerState.router = {};
+    routerState.router = routerSubscription;
+    routerSubscription.subscribe.mockClear();
+    unsubscribeBeforeNavigate.mockReset();
+    beforeNavigateListeners.clear();
   });
 
   it("renders the active cached route instead of a fresh live outlet", () => {
@@ -394,7 +414,7 @@ describe("RouteCacheManager", () => {
 
     render(<RouteCacheManager />);
 
-    expect(routerCacheContext.deleteCachedRoutes).not.toHaveBeenCalled();
+    expect(routerCacheContext.setCachedRoutes).not.toHaveBeenCalled();
     expect(screen.getByTestId("offscreen-/radicacion")).toHaveAttribute(
       "data-mode",
       "visible"
@@ -406,6 +426,7 @@ describe("RouteCacheManager", () => {
     const currentMatch = createRouterCacheMatch();
 
     routerState.router = {
+      ...routerSubscription,
       stores: {
         __store: createRouterStore({
           location: routerState.location,
@@ -464,6 +485,7 @@ describe("RouteCacheManager", () => {
     let navigateThis: unknown;
 
     routerState.router = {
+      ...routerSubscription,
       navigate: vi.fn(function navigate(this: unknown) {
         navigateThis = this;
       }),
@@ -534,13 +556,125 @@ describe("RouteCacheManager", () => {
 
     render(<RouteCacheManager />);
 
-    expect(routerCacheContext.deleteCachedRoutes).toHaveBeenCalledWith([
-      "/consulta",
+    expect(routerCacheContext.setCachedRoutes.mock.calls).toEqual([
+      ["/consulta", undefined],
     ]);
     expect(screen.getByTestId("live-outlet")).toBeInTheDocument();
     expect(
       screen.queryByTestId("cached-consulta-match")
     ).not.toBeInTheDocument();
-    expect(routerCacheContext.setCachedRoutes).not.toHaveBeenCalled();
+  });
+
+  describe("before navigation events", () => {
+    function createBeforeNavigateEvent(
+      toPathname: string,
+      overrides: { pathChanged?: boolean } = {}
+    ) {
+      const toLocation = {
+        external: false,
+        hash: "",
+        href: toPathname,
+        pathname: toPathname,
+        publicHref: toPathname,
+        search: {},
+        searchStr: "",
+        state: { __TSR_index: 0 },
+      };
+
+      return {
+        hashChanged: false,
+        hrefChanged: true,
+        pathChanged: overrides.pathChanged ?? true,
+        toLocation,
+        type: "onBeforeNavigate",
+      } satisfies RouterEvents["onBeforeNavigate"];
+    }
+
+    function emitBeforeNavigate(event: RouterEvents["onBeforeNavigate"]) {
+      for (const listener of beforeNavigateListeners) {
+        listener(event);
+      }
+    }
+
+    beforeEach(() => {
+      // A pending match keeps the manager from building a router snapshot.
+      routerState.matches = [createRouterCacheMatch({ status: "pending" })];
+      routerState.childMatches = [
+        createRouterCacheMatch({ status: "pending" }),
+      ];
+      routerCacheContext.cachedRoutes = {
+        "/radicacion": {
+          href: "/radicacion",
+          rootRouteId: "radicacion-match",
+          ready: true,
+          routerSnapshot: {},
+          staticData: {
+            routeCache: true,
+          },
+        },
+      };
+    });
+
+    it("subscribes once and unsubscribes on unmount", () => {
+      const { rerender, unmount } = render(<RouteCacheManager />);
+
+      rerender(<RouteCacheManager />);
+
+      expect(routerSubscription.subscribe).toHaveBeenCalledTimes(1);
+      expect(beforeNavigateListeners.size).toBe(1);
+
+      unmount();
+
+      expect(unsubscribeBeforeNavigate).toHaveBeenCalledTimes(1);
+      expect(beforeNavigateListeners.size).toBe(0);
+    });
+
+    it("touches a cached destination when the pathname changes", () => {
+      render(<RouteCacheManager />);
+
+      emitBeforeNavigate(createBeforeNavigateEvent("/radicacion"));
+
+      expect(routerCacheContext.touchCachedRoutes).toHaveBeenCalledWith([
+        "/radicacion",
+      ]);
+    });
+
+    it("does not touch when only the search or hash changes", () => {
+      render(<RouteCacheManager />);
+
+      emitBeforeNavigate(
+        createBeforeNavigateEvent("/radicacion", { pathChanged: false })
+      );
+
+      expect(routerCacheContext.touchCachedRoutes).not.toHaveBeenCalled();
+    });
+
+    it("does not touch destinations that are not cached", () => {
+      render(<RouteCacheManager />);
+
+      emitBeforeNavigate(createBeforeNavigateEvent("/consulta"));
+
+      expect(routerCacheContext.touchCachedRoutes).not.toHaveBeenCalled();
+    });
+
+    it("does not touch an expired cached destination", () => {
+      routerCacheContext.cachedRoutes = {
+        "/radicacion": {
+          createdAt: 0,
+          href: "/radicacion",
+          rootRouteId: "radicacion-match",
+          ready: true,
+          routerSnapshot: {},
+          staticData: {
+            routeCache: { maxAge: 1 },
+          },
+        },
+      };
+      render(<RouteCacheManager />);
+
+      emitBeforeNavigate(createBeforeNavigateEvent("/radicacion"));
+
+      expect(routerCacheContext.touchCachedRoutes).not.toHaveBeenCalled();
+    });
   });
 });

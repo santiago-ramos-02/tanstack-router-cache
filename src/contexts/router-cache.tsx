@@ -79,7 +79,14 @@ export type CachedRoutes = Record<string, CachedRouteData>;
 export type RouterCacheContextState = {
   cachedRoutes: CachedRoutes;
   erroredRouteCounts: Record<string, number>;
-  setCachedRoutes: (pathname: string, data: CachedRouteData) => void;
+  /**
+   * Applies the desired entry for a pathname, or removes it when `undefined`.
+   * Prunes stale entries and applies the entry limits in the same update.
+   */
+  setCachedRoutes: (
+    pathname: string,
+    data: CachedRouteData | undefined
+  ) => void;
   deleteCachedRoutes: (pathname: string[]) => void;
   touchCachedRoutes: (pathname: string[]) => void;
   retainErroredRoute: (pathname: string) => void;
@@ -148,6 +155,16 @@ function pruneStaleCachedRoutes(routes: CachedRoutes) {
   }
 
   return changed ? nextRoutes : routes;
+}
+
+function withoutCachedRoute(routes: CachedRoutes, pathname: string) {
+  if (!Object.hasOwn(routes, pathname)) {
+    return routes;
+  }
+
+  const nextRoutes = { ...routes };
+  Reflect.deleteProperty(nextRoutes, pathname);
+  return nextRoutes;
 }
 
 function isSameCachedRouteData(
@@ -351,29 +368,20 @@ function getNextCachedRoutesState(params: {
   cacheConfig: RouterCacheConfig;
   key: string;
   state: CachedRoutes;
-  value: CachedRouteData;
+  value: CachedRouteData | undefined;
 }) {
+  const { state, value } = params;
   const normalizedKey = normalizeCachedRoutePathname(params.key);
-  const state = pruneStaleCachedRoutes(params.state);
 
   if (params.cacheConfig.maxEntries === 0) {
     return state === EMPTY_CACHED_ROUTES ? state : EMPTY_CACHED_ROUTES;
   }
 
-  if (!isRouteCacheEnabled(params.value.staticData)) {
-    if (!Object.hasOwn(state, normalizedKey)) {
-      return state;
-    }
-
-    const nextState = { ...state };
-    Reflect.deleteProperty(nextState, normalizedKey);
-    return nextState;
+  if (!(value && isRouteCacheEnabled(value.staticData))) {
+    return withoutCachedRoute(state, normalizedKey);
   }
 
-  const nextRouteData = createCachedRouteData(
-    state[normalizedKey],
-    params.value
-  );
+  const nextRouteData = createCachedRouteData(state[normalizedKey], value);
 
   if (isSameCachedRouteData(state[normalizedKey], nextRouteData)) {
     return state;
@@ -436,9 +444,18 @@ function RouterCacheProviderScope({
     Record<string, number>
   >({});
 
+  // Every mutation goes through here so stale entries are pruned in the same
+  // state change instead of by a follow-up effect after commit.
+  const commitCachedRoutes = useCallback(
+    (update: (routes: CachedRoutes) => CachedRoutes) => {
+      setCachedRoutes((state) => update(pruneStaleCachedRoutes(state)));
+    },
+    []
+  );
+
   const updateCachedRoutes = useCallback(
-    (key: string, value: CachedRouteData) => {
-      setCachedRoutes((state) =>
+    (key: string, value: CachedRouteData | undefined) => {
+      commitCachedRoutes((state) =>
         getNextCachedRoutesState({
           cacheConfig,
           key,
@@ -447,68 +464,71 @@ function RouterCacheProviderScope({
         })
       );
     },
-    [cacheConfig]
+    [cacheConfig, commitCachedRoutes]
   );
 
-  const deleteCachedRoutes = useCallback((keys: string[]) => {
-    setCachedRoutes((state) => {
-      let changed = false;
-      const newState = { ...state };
-      for (const key of keys) {
-        const normalizedKey = normalizeCachedRoutePathname(key);
-        if (Object.hasOwn(newState, normalizedKey)) {
-          Reflect.deleteProperty(newState, normalizedKey);
+  const deleteCachedRoutes = useCallback(
+    (keys: string[]) => {
+      commitCachedRoutes((state) => {
+        let changed = false;
+        const newState = { ...state };
+        for (const key of keys) {
+          const normalizedKey = normalizeCachedRoutePathname(key);
+          if (Object.hasOwn(newState, normalizedKey)) {
+            Reflect.deleteProperty(newState, normalizedKey);
+            changed = true;
+          }
+        }
+
+        return changed ? newState : state;
+      });
+    },
+    [commitCachedRoutes]
+  );
+
+  const touchCachedRoutes = useCallback(
+    (keys: string[]) => {
+      commitCachedRoutes((state) => {
+        let changed = false;
+        const touchedAt = Date.now();
+        const nextState = { ...state };
+
+        for (const key of keys) {
+          const normalizedKey = normalizeCachedRoutePathname(key);
+          const route = nextState[normalizedKey];
+
+          if (!route || route.lastVisibleAt === touchedAt) {
+            continue;
+          }
+
+          nextState[normalizedKey] = {
+            ...route,
+            lastVisibleAt: touchedAt,
+          };
           changed = true;
         }
-      }
 
-      return changed ? newState : state;
-    });
-  }, []);
+        return changed ? nextState : state;
+      });
+    },
+    [commitCachedRoutes]
+  );
 
-  const touchCachedRoutes = useCallback((keys: string[]) => {
-    setCachedRoutes((state) => {
-      let changed = false;
-      const touchedAt = Date.now();
-      const nextState = { ...state };
+  const retainErroredRoute = useCallback(
+    (pathname: string) => {
+      const normalizedPathname = normalizeCachedRoutePathname(pathname);
 
-      for (const key of keys) {
-        const normalizedKey = normalizeCachedRoutePathname(key);
-        const route = nextState[normalizedKey];
+      setErroredRouteCounts((state) => ({
+        ...state,
+        [normalizedPathname]: (state[normalizedPathname] ?? 0) + 1,
+      }));
 
-        if (!route || route.lastVisibleAt === touchedAt) {
-          continue;
-        }
-
-        nextState[normalizedKey] = {
-          ...route,
-          lastVisibleAt: touchedAt,
-        };
-        changed = true;
-      }
-
-      return changed ? nextState : state;
-    });
-  }, []);
-
-  const retainErroredRoute = useCallback((pathname: string) => {
-    const normalizedPathname = normalizeCachedRoutePathname(pathname);
-
-    setErroredRouteCounts((state) => ({
-      ...state,
-      [normalizedPathname]: (state[normalizedPathname] ?? 0) + 1,
-    }));
-
-    setCachedRoutes((state) => {
-      if (!Object.hasOwn(state, normalizedPathname)) {
-        return state;
-      }
-
-      const nextState = { ...state };
-      Reflect.deleteProperty(nextState, normalizedPathname);
-      return nextState;
-    });
-  }, []);
+      commitCachedRoutes((state) =>
+        withoutCachedRoute(state, normalizedPathname)
+      );
+    },
+    [commitCachedRoutes]
+  );
 
   const releaseErroredRoute = useCallback((pathname: string) => {
     const normalizedPathname = normalizeCachedRoutePathname(pathname);

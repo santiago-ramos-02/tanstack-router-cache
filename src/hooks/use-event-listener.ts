@@ -159,6 +159,9 @@ export function useEventListener(events?: EventBuckets) {
     };
   });
 
+  // Not an Effect Event: the stable wrappers are called by the event bus, which
+  // emits from outside React effects, so they need a ref to reach the latest
+  // handlers.
   useLayoutEffect(() => {
     eventsRef.current = events;
   });

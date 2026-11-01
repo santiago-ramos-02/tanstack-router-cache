@@ -8,6 +8,8 @@ import type { EventBuckets } from "./use-event-listener";
 
 export function useRouteCacheActivity(fn: (active: boolean) => void) {
   const activity = useOptionalRouteCacheActivity();
+  // A ref rather than an Effect Event: the `activeChange` handler below runs
+  // from the event bus, outside any effect, where Effect Events are not allowed.
   const callbackRef = useRef(fn);
   const lastActiveRef = useRef<boolean | undefined>(undefined);
   const routePathname = useLocation({

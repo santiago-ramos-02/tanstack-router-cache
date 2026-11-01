@@ -94,11 +94,13 @@ The provider exposes these operations to the cache manager and hooks:
 
 | Operation | Purpose |
 | --- | --- |
-| Upsert cached route | Insert or update one cached route entry after normalizing the pathname. |
-| Delete cached routes | Remove cached entries. Used by invalidation, errored routes, and cache manager cleanup. |
-| Touch cached routes | Update `lastVisibleAt` when a cached route becomes visible. |
+| Set cached route | Apply the desired entry for one pathname after normalizing it, or remove the entry when none is desired. The cache manager makes this single call on each synchronization. |
+| Delete cached routes | Remove cached entries. Used by invalidation and the `useRouterCache` helpers. |
+| Touch cached routes | Update `lastVisibleAt` when a cached route is about to become visible. |
 | Retain errored route | Mark a pathname as currently errored and remove its cached entry. |
 | Release errored route | Release one error retain count for a pathname. |
+
+Every operation that changes cached entries first prunes expired entries (see [Cache synchronization](#cache-synchronization)) and then applies its own change, all in the same state update. There is no separate cleanup pass after commit.
 
 ## Cached route data
 
@@ -194,7 +196,9 @@ When the cached entry is refreshed, the cache manager updates those snapshot sto
 
 ## Cache synchronization
 
-On every relevant router state change, the cache manager checks the current route state and updates the cache.
+On every relevant router state change, the cache manager checks the current route state and updates the cache in a single provider call: either the desired entry for the current pathname or its removal. That call prunes expired entries, writes or deletes the entry, and enforces the limits in one state update, so a navigation commits at most one cache state change.
+
+This runs as a layout effect on the render rather than from a router event for two reasons. TanStack Router publishes no event when a loader revalidates in the background and replaces the matches of the visible route, so only the render sees that change. And on a route's first visit the swap from the live outlet to the cached snapshot must commit before paint, which a state update scheduled from a router event would not guarantee.
 
 ```mermaid
 flowchart TD
@@ -225,7 +229,7 @@ flowchart TD
 
 The current entry being written is protected during limit enforcement so the route that just became ready is not immediately evicted.
 
-Cached entries with a route `maxAge` are treated as expired when their age exceeds that value. Expired entries are not rendered from the snapshot and are removed on the next cache update.
+Cached entries with a route `maxAge` are treated as expired when their age exceeds that value. Expired entries are never rendered from the snapshot. They are pruned inside the next cache update of any kind (set, delete, touch, or errored-route retain), so no extra render follows the update to clean them up.
 
 ## Visible pathname
 
@@ -387,6 +391,15 @@ Limit enforcement runs in this order:
 
 The timestamp used for eviction is `lastVisibleAt`, then `createdAt`, then `0`.
 
+## Router events
+
+The manager subscribes to the router's `onBeforeNavigate` event. TanStack Router emits it for every navigation before it loads the destination, with the destination (`toLocation`), the last resolved location (`fromLocation`), and whether the pathname changed. When the destination pathname has a non-expired cached entry, the handler:
+
+1. Touches the entry (updates `lastVisibleAt`) if the pathname changed.
+2. Restores the cached href if the rules below ask for it.
+
+The handler reads the latest cache state through `useEffectEvent`, so the subscription is created once per router.
+
 ## Href restoration
 
 The cache key is pathname-based, but a route can be cached with a fuller href that includes search params or a hash.
@@ -418,6 +431,8 @@ router.navigate({
   resetScroll: false,
 });
 ```
+
+Because this runs in `onBeforeNavigate`, the new navigation supersedes the load of the bare location before it matches routes, resolves, renders, or reaches the cache. The bare href never overwrites the cached href, the history keeps a single entry carrying the cached href, and the cached href is not a bare pathname, so the redirect cannot loop.
 
 This keeps cached list filters, tabs, anchors, or search state aligned with the retained route view.
 

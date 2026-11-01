@@ -2,6 +2,7 @@
 
 import type {
   ParsedLocation,
+  RouterEvents,
   StaticDataRouteOption,
 } from "@tanstack/react-router";
 import {
@@ -12,7 +13,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
 
 import { useRouterCacheContext } from "../contexts/router-cache";
 import { useEventListener } from "../hooks/use-event-listener";
@@ -58,9 +59,6 @@ type RouterSnapshotUpdater = (input: RouterSnapshotInput) => void;
 type SetCachedRoutes = ReturnType<
   typeof useRouterCacheContext
 >["setCachedRoutes"];
-type DeleteCachedRoutes = ReturnType<
-  typeof useRouterCacheContext
->["deleteCachedRoutes"];
 type ReadyCachedRoute = ReturnType<
   typeof useRouterCacheContext
 >["cachedRoutes"][string];
@@ -367,7 +365,6 @@ function syncReadyCachedRoute({
 function syncCachedRouteState({
   isCurrentMatchReady,
   isCurrentMatchResolved,
-  deleteCachedRoutes,
   isCurrentRouteErrored,
   rootRouteId,
   matches,
@@ -393,13 +390,12 @@ function syncCachedRouteState({
   routerResolvedLocation?: ParsedLocation;
   routerHref?: string;
   routerPathname: string;
-  deleteCachedRoutes: DeleteCachedRoutes;
   setCachedRoutes: SetCachedRoutes;
   staticData?: StaticDataRouteOption;
 }) {
   if (isCurrentRouteErrored) {
     if (route) {
-      deleteCachedRoutes([routerPathname]);
+      setCachedRoutes(routerPathname, undefined);
     }
 
     return;
@@ -431,7 +427,7 @@ function syncCachedRouteState({
   }
 
   if (route) {
-    deleteCachedRoutes([routerPathname]);
+    setCachedRoutes(routerPathname, undefined);
   }
 }
 
@@ -588,16 +584,6 @@ function renderCachedRoute({
   );
 }
 
-function getStaleCachedRoutePathnames(
-  cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"]
-) {
-  const now = Date.now();
-
-  return Object.entries(cachedRoutes).flatMap(([pathname, route]) =>
-    isCachedRouteStale(route, now) ? [pathname] : []
-  );
-}
-
 function buildRouteCacheModes(
   cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"],
   routerPathname: string
@@ -656,7 +642,6 @@ function syncCachedRouteActivityEvents(params: {
 function RouteCacheManager() {
   const {
     cachedRoutes,
-    deleteCachedRoutes,
     erroredRouteCounts,
     setCachedRoutes,
     touchCachedRoutes,
@@ -666,11 +651,9 @@ function RouteCacheManager() {
     null
   );
   const previousPathnameRef = useRef<string | undefined>(undefined);
-  const previousHrefRef = useRef<string | undefined>(undefined);
   const previousRouteCacheModesRef = useRef<Map<string, ActivityMode> | null>(
     null
   );
-  const previousVisiblePathnameRef = useRef<string | undefined>(undefined);
 
   const routerLocation = useRouterState({
     select: (state) => ({ ...state.location }),
@@ -685,10 +668,10 @@ function RouteCacheManager() {
     routerResolvedLocation?.pathname ?? routerPathname
   );
   const destinationRoute = cachedRoutes[routerPathname];
+  const router = useRouter();
 
   const matches = normalizeRouterMatches(useMatches());
   const childMatches = normalizeRouterMatches(useChildMatches());
-  const router = useRouter();
   const currentMatch = matches.length ? matches.at(-1) : undefined;
   const outletRootMatch = childMatches.length ? childMatches[0] : currentMatch;
   const currentMatchPathname = currentMatch?.pathname
@@ -721,30 +704,10 @@ function RouteCacheManager() {
   const bypassCachedPathname = isCurrentRouteErrored
     ? routerPathname
     : undefined;
-  /* oxlint-disable react/refs -- Reading the previous pathname during render is intentional: the restore decision must be evaluated for this exact commit, before the effect below advances the ref. */
-  const previousPathname = previousPathnameRef.current;
-  const shouldRestoreDestinationHref = shouldRestoreCachedHref({
-    cachedHref: destinationRoute?.href,
-    currentHref: routerHref,
-    currentPathname: routerPathname,
-    isRouteCacheEnabled: isRouteCacheEnabled(destinationRoute?.staticData),
-    previousPathname,
-  });
-  /* oxlint-enable react/refs */
-
+  // TanStack Router has no event for matches the loader republishes in the
+  // background, so this follows the render. It is a layout effect so a first
+  // visit swaps from the live outlet to its cached snapshot before paint.
   useLayoutEffect(() => {
-    const stalePathnames = getStaleCachedRoutePathnames(cachedRoutes);
-
-    if (stalePathnames.length > 0) {
-      deleteCachedRoutes(stalePathnames);
-    }
-  }, [cachedRoutes, deleteCachedRoutes]);
-
-  useLayoutEffect(() => {
-    if (shouldRestoreDestinationHref) {
-      return;
-    }
-
     syncCachedRouteState({
       isCurrentMatchReady,
       isCurrentMatchResolved,
@@ -758,13 +721,11 @@ function RouteCacheManager() {
       routerResolvedLocation,
       routerHref,
       routerPathname,
-      deleteCachedRoutes,
       setCachedRoutes,
       staticData,
     });
   }, [
     currentCachedRoute,
-    deleteCachedRoutes,
     isCurrentRouteErrored,
     isCurrentMatchReady,
     isCurrentMatchResolved,
@@ -778,7 +739,6 @@ function RouteCacheManager() {
     routerPathname,
     staticData,
     setCachedRoutes,
-    shouldRestoreDestinationHref,
   ]);
 
   useLayoutEffect(() => {
@@ -822,19 +782,6 @@ function RouteCacheManager() {
     });
   }, [cachedRoutes, eventListener, routerPathname]);
 
-  useLayoutEffect(() => {
-    if (
-      previousVisiblePathnameRef.current === routerPathname ||
-      !cachedRoutes[routerPathname]
-    ) {
-      previousVisiblePathnameRef.current = routerPathname;
-      return;
-    }
-
-    previousVisiblePathnameRef.current = routerPathname;
-    touchCachedRoutes([routerPathname]);
-  }, [cachedRoutes, touchCachedRoutes, routerPathname]);
-
   useEffect(() => {
     const pendingNavigation = pendingCachedNavigationRef.current;
 
@@ -874,18 +821,54 @@ function RouteCacheManager() {
     };
   }, [eventListener, routerPathname]);
 
-  useLayoutEffect(() => {
-    if (!(shouldRestoreDestinationHref && destinationRoute?.href)) {
-      return;
-    }
+  // Runs before the router loads the destination. Calling `navigate` from here
+  // supersedes that load, so a bare revisit never resolves, renders or caches
+  // before its cached href replaces it.
+  const handleBeforeNavigate = useEffectEvent(
+    ({
+      fromLocation,
+      pathChanged,
+      toLocation,
+    }: RouterEvents["onBeforeNavigate"]) => {
+      const toPathname = normalizeCachedRoutePathname(toLocation.pathname);
+      const route = cachedRoutes[toPathname];
 
-    restoreCachedHref(router, destinationRoute.href);
-  }, [destinationRoute?.href, router, shouldRestoreDestinationHref]);
+      if (!route || isCachedRouteStale(route)) {
+        return;
+      }
+
+      if (pathChanged) {
+        touchCachedRoutes([toPathname]);
+      }
+
+      if (
+        route.href &&
+        shouldRestoreCachedHref({
+          cachedHref: route.href,
+          currentHref: toLocation.href,
+          currentPathname: toPathname,
+          isRouteCacheEnabled: isRouteCacheEnabled(route.staticData),
+          previousPathname: fromLocation
+            ? normalizeCachedRoutePathname(fromLocation.pathname)
+            : undefined,
+        })
+      ) {
+        restoreCachedHref(router, route.href);
+      }
+    }
+  );
+
+  useEffect(
+    () =>
+      router.subscribe("onBeforeNavigate", (event) => {
+        handleBeforeNavigate(event);
+      }),
+    [router]
+  );
 
   useEffect(() => {
     previousPathnameRef.current = routerPathname;
-    previousHrefRef.current = routerHref;
-  }, [routerHref, routerPathname, previousPathnameRef]);
+  }, [routerPathname, previousPathnameRef]);
 
   const shouldRenderLiveOutlet =
     routerPathname === bypassCachedPathname ||

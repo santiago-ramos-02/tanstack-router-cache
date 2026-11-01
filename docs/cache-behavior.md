@@ -61,4 +61,4 @@ export const Route = createFileRoute("/customers")({
 });
 ```
 
-When a cached entry is older than `maxAge`, the cache manager does not restore it. The live route renders and the expired cache entry is removed on the next cache update.
+When a cached entry is older than `maxAge`, the cache manager does not restore it. The live route renders and the expired cache entry is pruned as part of the next cache update.
