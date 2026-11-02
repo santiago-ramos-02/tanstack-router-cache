@@ -7,12 +7,14 @@ process.env.NODE_ENV = "test";
 // CI logs list each test file and, under it, each test by name with its
 // duration, then the totals; a failed test keeps its error and console output. Naming the reporters
 // replaces Vitest's default, so the github-actions one it adds on GitHub is
-// listed too.
+// listed too, without its job summary: Quality Gate writes the run's only one.
+const githubActions: ["github-actions", { jobSummary: { enabled: boolean } }] =
+  ["github-actions", { jobSummary: { enabled: false } }];
 const ciReporting = process.env.CI
   ? {
       reporters: [
         "tree",
-        ...(process.env.GITHUB_ACTIONS === "true" ? ["github-actions"] : []),
+        ...(process.env.GITHUB_ACTIONS === "true" ? [githubActions] : []),
       ],
       silent: "passed-only" as const,
       slowTestThreshold: 10_000,
