@@ -105,15 +105,21 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     }
 
     const savedPosition = windowScrollPositions.get(pathname);
+    // One signal owns every listener, timer and frame of this visit, so each
+    // way out of the effect releases them the same way.
+    const visit = new AbortController();
+    const { signal } = visit;
     let userRequestedScroll = false;
-    let scrollTrackingIntervalId:
-      | ReturnType<typeof globalThis.setInterval>
-      | undefined;
+    // The timer runs for the whole visit but records only once tracking
+    // starts, so a restored route is not overwritten before it is restored.
+    let isTrackingScroll = false;
+    const scrollTrackingIntervalId = globalThis.setInterval(() => {
+      if (isTrackingScroll) {
+        saveScrollPosition();
+      }
+    }, SCROLL_TRACKING_INTERVAL_MS);
     const startScrollTracking = () => {
-      scrollTrackingIntervalId ??= globalThis.setInterval(
-        saveScrollPosition,
-        SCROLL_TRACKING_INTERVAL_MS
-      );
+      isTrackingScroll = true;
     };
     const handleScroll = () => {
       if (!savedPosition || userRequestedScroll) {
@@ -130,15 +136,19 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     };
 
     // oxlint-disable-next-line github/prefer-observers -- Exact window scroll coordinates cannot be observed with IntersectionObserver.
-    globalThis.addEventListener("scroll", handleScroll);
+    globalThis.addEventListener("scroll", handleScroll, { signal });
     globalThis.addEventListener("wheel", markUserRequestedScroll, {
       passive: true,
+      signal,
     });
     globalThis.addEventListener("touchstart", markUserRequestedScroll, {
       passive: true,
+      signal,
     });
-    globalThis.addEventListener("pointerdown", markUserRequestedScroll);
-    globalThis.addEventListener("keydown", handleKeyDown);
+    globalThis.addEventListener("pointerdown", markUserRequestedScroll, {
+      signal,
+    });
+    globalThis.addEventListener("keydown", handleKeyDown, { signal });
 
     if (!savedPosition) {
       // A first visit starts where the router puts it, at the top. The window
@@ -147,14 +157,8 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
       // turns visible again. Tracking records this route's own scroll.
       startScrollTracking();
       return () => {
-        if (scrollTrackingIntervalId !== undefined) {
-          globalThis.clearInterval(scrollTrackingIntervalId);
-        }
-        globalThis.removeEventListener("scroll", handleScroll);
-        globalThis.removeEventListener("wheel", markUserRequestedScroll);
-        globalThis.removeEventListener("touchstart", markUserRequestedScroll);
-        globalThis.removeEventListener("pointerdown", markUserRequestedScroll);
-        globalThis.removeEventListener("keydown", handleKeyDown);
+        globalThis.clearInterval(scrollTrackingIntervalId);
+        visit.abort();
       };
     }
 
@@ -183,14 +187,8 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
       for (const timeoutId of timeoutIds) {
         globalThis.clearTimeout(timeoutId);
       }
-      if (scrollTrackingIntervalId !== undefined) {
-        globalThis.clearInterval(scrollTrackingIntervalId);
-      }
-      globalThis.removeEventListener("scroll", handleScroll);
-      globalThis.removeEventListener("wheel", markUserRequestedScroll);
-      globalThis.removeEventListener("touchstart", markUserRequestedScroll);
-      globalThis.removeEventListener("pointerdown", markUserRequestedScroll);
-      globalThis.removeEventListener("keydown", handleKeyDown);
+      globalThis.clearInterval(scrollTrackingIntervalId);
+      visit.abort();
     };
   }, [mode, pathname]);
 

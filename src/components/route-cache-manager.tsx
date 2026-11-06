@@ -789,13 +789,12 @@ function RouteCacheManager() {
       return;
     }
 
-    let firstFrameId = 0;
-    let secondFrameId = 0;
+    const frameIds = { first: 0, second: 0 };
 
-    firstFrameId = globalThis.requestAnimationFrame(() => {
+    frameIds.first = globalThis.requestAnimationFrame(() => {
       const visibleAt = performance.now();
 
-      secondFrameId = globalThis.requestAnimationFrame(() => {
+      frameIds.second = globalThis.requestAnimationFrame(() => {
         const paintedAt = performance.now();
 
         if (
@@ -816,8 +815,8 @@ function RouteCacheManager() {
     });
 
     return () => {
-      globalThis.cancelAnimationFrame(firstFrameId);
-      globalThis.cancelAnimationFrame(secondFrameId);
+      globalThis.cancelAnimationFrame(frameIds.first);
+      globalThis.cancelAnimationFrame(frameIds.second);
     };
   }, [eventListener, routerPathname]);
 
