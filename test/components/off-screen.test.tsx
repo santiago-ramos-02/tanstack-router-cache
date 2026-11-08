@@ -244,7 +244,6 @@ describe("OffScreen", () => {
       </OffScreen>
     );
     const insideButton = screen.getByRole("button", { name: "Inside route" });
-    const blurSpy = vi.spyOn(insideButton, "blur");
 
     insideButton.focus();
     expect(insideButton).toHaveFocus();
@@ -256,7 +255,10 @@ describe("OffScreen", () => {
     );
 
     await waitFor(() => {
-      expect(blurSpy).toHaveBeenCalledTimes(1);
+      // The subtree is display: none, so the document has already taken focus
+      // out of it, as a browser does; nothing is left focused in the route.
+      expect(insideButton).not.toHaveFocus();
+      expect(document.body).toHaveFocus();
       expect(escapeEvents.keydowns).toHaveLength(1);
       expect(escapeEvents.keyups).toHaveLength(1);
     });
