@@ -59,6 +59,7 @@
   "dependencies": {},
   "devDependencies": {
     "@tanstack/react-router": "^1.170.46",
+    "@tanstack/redact": "^0.3.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.6",

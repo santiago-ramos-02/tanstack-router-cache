@@ -25,8 +25,8 @@ import {
   isRouteCacheEnabled,
 } from "../route-cache-static-data";
 import type { ActivityMode } from "../types";
-import CachedOutlet from "./cached-outlet";
-import OffScreen from "./off-screen";
+import type CachedOutlet from "./cached-outlet";
+import CachedRouteView from "./cached-route-view";
 import { shouldRestoreCachedHref } from "./restore-cached-href";
 
 type RouterSnapshot = ComponentProps<typeof CachedOutlet>["routerSnapshot"];
@@ -560,27 +560,19 @@ function renderCachedRoute({
     return null;
   }
 
-  const content =
-    route.rootRouteId && route.routerSnapshot ? (
-      <CachedOutlet
-        routeId={route.rootRouteId}
-        routerSnapshot={route.routerSnapshot}
-      />
-    ) : null;
-
-  if (!content) {
+  if (!route.rootRouteId || !route.routerSnapshot) {
     return null;
   }
 
   return (
-    <OffScreen
+    <CachedRouteView
       effectMode={getRouteCacheEffectMode(route.staticData)}
       key={pathname}
       mode={routerPathname === pathname ? "visible" : "hidden"}
       pathname={pathname}
-    >
-      {content}
-    </OffScreen>
+      rootRouteId={route.rootRouteId}
+      routerSnapshot={route.routerSnapshot}
+    />
   );
 }
 

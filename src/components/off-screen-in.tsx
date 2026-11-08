@@ -1,6 +1,7 @@
-import { Activity, useLayoutEffect, useRef } from "react";
+import { Activity, memo, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
 
+import { RouteCacheActivityProvider } from "../contexts/route-cache-activity";
 import {
   dismissTransientUi,
   initializeTransientUiTracking,
@@ -42,6 +43,51 @@ const SCROLL_RESTORE_DELAYS = [
   FINAL_SCROLL_RESTORE_DELAY,
 ] as const;
 
+/**
+ * Runs `callback` in a task after the next frame paints, the way React renders
+ * hidden content at a lower priority than what the user sees. Returns its
+ * cancellation.
+ */
+function scheduleAfterPaint(callback: () => void) {
+  let isCancelled = false;
+  let timeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+  const frameId = globalThis.requestAnimationFrame(() => {
+    timeoutId = globalThis.setTimeout(() => {
+      if (!isCancelled) {
+        callback();
+      }
+    }, 0);
+  });
+
+  return () => {
+    isCancelled = true;
+    globalThis.cancelAnimationFrame(frameId);
+    globalThis.clearTimeout(timeoutId);
+  };
+}
+
+type RetainedRouteProps = {
+  children: ReactNode;
+  effectMode: RouteCacheEffectMode;
+  mode: ActivityMode;
+};
+
+/**
+ * The retained subtree. A memo boundary, so it renders only when its own mode
+ * changes, never because its container did.
+ */
+function RetainedSubtree(props: Readonly<RetainedRouteProps>) {
+  const { children, effectMode, mode } = props;
+
+  return effectMode === "keep-alive" ? (
+    children
+  ) : (
+    <Activity mode={mode}>{children}</Activity>
+  );
+}
+
+const RetainedRoute = memo(RetainedSubtree);
+
 export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
   const {
     mode,
@@ -51,6 +97,18 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     pathname,
   } = props;
   const localContainerRef = useRef<HTMLDivElement | null>(null);
+  // The mode the retained subtree is in. Revealing a route shows it in the
+  // navigation's commit. Hiding one only hides its container there; the
+  // subtree is retired (effects disconnected, transient UI dismissed) in a
+  // later task, after the revealed route paints, so the navigation's commit
+  // renders and lays out nothing of the route it leaves.
+  const [retainedMode, setRetainedMode] = useState(mode);
+
+  if (mode === "visible" && retainedMode !== "visible") {
+    setRetainedMode("visible");
+  }
+
+  const subtreeMode = mode === "visible" ? "visible" : retainedMode;
 
   const attachContainerRef = (node: HTMLDivElement | null) => {
     localContainerRef.current = node;
@@ -76,17 +134,40 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     syncTransientUiRouteActivity(pathname, mode);
   }, [mode, pathname]);
 
-  useLayoutEffect(() => {
-    const visibleContainer = localContainerRef.current;
+  const subtreeModeRef = useRef(subtreeMode);
 
-    return () => {
-      if (!pathname || mode !== "visible") {
-        return;
+  useLayoutEffect(() => {
+    subtreeModeRef.current = subtreeMode;
+  }, [subtreeMode]);
+
+  // Retiring dismisses the route's transient UI while its listeners are still
+  // connected, then hides the subtree.
+  useLayoutEffect(() => {
+    if (subtreeMode === "hidden" || mode === "visible") {
+      return;
+    }
+
+    const container = localContainerRef.current;
+
+    return scheduleAfterPaint(() => {
+      if (pathname) {
+        dismissTransientUi(container, pathname);
       }
 
-      dismissTransientUi(visibleContainer, pathname);
+      setRetainedMode("hidden");
+    });
+  }, [mode, pathname, subtreeMode]);
+
+  // A route unmounted before it is retired dismisses its transient UI then.
+  useLayoutEffect(() => {
+    const container = localContainerRef.current;
+
+    return () => {
+      if (pathname && subtreeModeRef.current === "visible") {
+        dismissTransientUi(container, pathname);
+      }
     };
-  }, [mode, pathname]);
+  }, [pathname]);
 
   useLayoutEffect(() => {
     if (typeof globalThis === "undefined" || !pathname) {
@@ -192,7 +273,13 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
     };
   }, [mode, pathname]);
 
-  const container = (
+  const retainedRoute = (
+    <RetainedRoute effectMode={effectMode} mode={subtreeMode}>
+      {children}
+    </RetainedRoute>
+  );
+
+  return (
     <div
       aria-hidden={
         effectMode === "keep-alive" && mode === "hidden" ? true : undefined
@@ -204,19 +291,18 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
       data-router-cache-pathname={pathname}
       inert={effectMode === "keep-alive" && mode === "hidden"}
       ref={attachContainerRef}
-      style={
-        effectMode === "keep-alive" && mode === "hidden"
-          ? { display: "none" }
-          : undefined
-      }
+      style={mode === "hidden" ? { display: "none" } : undefined}
     >
-      {children}
+      {pathname ? (
+        // The activity context follows the navigation: the hooks that read it
+        // learn the route is hidden as soon as the user leaves it. Only those
+        // hooks render then; the retained subtree waits for the retire.
+        <RouteCacheActivityProvider mode={mode} pathname={pathname}>
+          {retainedRoute}
+        </RouteCacheActivityProvider>
+      ) : (
+        retainedRoute
+      )}
     </div>
-  );
-
-  return effectMode === "keep-alive" ? (
-    container
-  ) : (
-    <Activity mode={mode}>{container}</Activity>
   );
 }

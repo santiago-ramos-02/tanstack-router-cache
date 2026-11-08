@@ -340,6 +340,12 @@ describe("OffScreen", () => {
 
   it("restores the saved window scroll position when a cached route becomes visible again", () => {
     const animationFrameCallbacks: FrameRequestCallback[] = [];
+    // A frame runs the callbacks queued before it, as a browser does.
+    const runFrame = () => {
+      for (const callback of animationFrameCallbacks.splice(0)) {
+        callback(performance.now());
+      }
+    };
     const pathname = "/scroll-restore-test";
     const scrollToSpy = vi
       .spyOn(globalThis, "scrollTo")
@@ -382,10 +388,10 @@ describe("OffScreen", () => {
 
     expect(scrollToSpy).not.toHaveBeenCalled();
 
-    animationFrameCallbacks.shift()?.(performance.now());
+    runFrame();
     expect(scrollToSpy).not.toHaveBeenCalled();
 
-    animationFrameCallbacks.shift()?.(performance.now());
+    runFrame();
 
     expect(scrollToSpy).toHaveBeenCalledWith(
       savedScrollPosition.x,

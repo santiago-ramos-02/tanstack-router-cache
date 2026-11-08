@@ -262,15 +262,16 @@ Most of the time, `visiblePathname` is the resolved pathname. During some naviga
 
 ## Rendering model
 
-Every ready cached entry is rendered through `OffScreen`.
+Every ready cached entry is rendered through `CachedRouteView`, a memo boundary around `OffScreen` that keeps its `CachedOutlet` element across renders.
 
 ```tsx
-<OffScreen mode={visiblePathname === pathname ? "visible" : "hidden"}>
-  <CachedOutlet
-    routeId={route.rootRouteId}
-    routerSnapshot={route.routerSnapshot}
-  />
-</OffScreen>
+<CachedRouteView
+  key={pathname}
+  mode={visiblePathname === pathname ? "visible" : "hidden"}
+  pathname={pathname}
+  rootRouteId={route.rootRouteId}
+  routerSnapshot={route.routerSnapshot}
+/>
 ```
 
 ```mermaid
@@ -306,7 +307,30 @@ flowchart TD
 </div>
 ```
 
-Those attributes are used by diagnostics and transient UI tracking.
+Those attributes are used by diagnostics and transient UI tracking. The wrapping element sits outside the `Activity`, so changing them never renders the retained subtree.
+
+## Revealing and retiring
+
+A navigation should cost only the route it shows. React renders hidden `Activity` content at a lower priority than visible content, but runtimes such as TanStack Redact render it synchronously, in the same pass. Hiding a large route in the navigation's commit then renders it and lays it out again, in the same task as the route being revealed. So a navigation is split in two:
+
+1. **Reveal**, in the navigation's commit: the destination's `Activity` turns visible and its effects connect. The route left gets `display: none` on its wrapping element, its external portals are hidden, and the activity context reports it hidden, so only the components that read `useRouteCacheActive`, `useRouteCacheEffect` or `useRouteCacheActivity` render. Nothing else of its subtree renders.
+2. **Retire**, in a task after the revealed route paints: the left route's transient UI is dismissed while its listeners are still connected, then its `Activity` turns hidden, which disconnects its effects.
+
+Routes whose mode does not change are not rendered at all: `CachedRouteView` and the boundary around each `Activity` are memoized, and their children keep their element. Returning to a route before it is retired cancels the retire, so its effects never disconnect.
+
+```mermaid
+sequenceDiagram
+  participant Nav as Navigation commit
+  participant Shown as Revealed route
+  participant Left as Route left
+  participant Task as Task after paint
+
+  Nav->>Shown: Activity visible, effects connect
+  Nav->>Left: display none, portals hidden
+  Note over Nav: Browser paints the revealed route
+  Task->>Left: Dismiss transient UI
+  Task->>Left: Activity hidden, effects disconnect
+```
 
 ## Scroll and transient UI
 
@@ -323,13 +347,14 @@ sequenceDiagram
   DOM->>Tracker: MutationObserver sees added element
   Tracker->>Tracker: Assign owner pathname
   Route->>Tracker: Route becomes hidden
-  Tracker->>Portal: Dispatch hover exit and Escape
   Tracker->>Portal: Set display none, aria-hidden, inert
+  Route->>Tracker: Route is retired after the next paint
+  Tracker->>Portal: Dispatch hover exit and Escape
   Route->>Tracker: Route becomes visible
   Tracker->>Portal: Restore previous DOM state
 ```
 
-From React 19.3, a hidden `<Activity>` also hides the portals rendered inside it (`display: none !important`) during commit and shows them again itself. The tracker leaves `display` to React for those elements and still applies `aria-hidden` and `inert`, so restoring a route never re-applies React's hiding. In `keep-alive` effect mode there is no `<Activity>`, and the tracker manages `display` too.
+From React 19.3, a hidden `<Activity>` also hides the portals rendered inside it (`display: none !important`) during the retire's commit and shows them again itself. The tracker leaves `display` to React for those elements and still applies `aria-hidden` and `inert`, so restoring a route never re-applies React's hiding. In `keep-alive` effect mode there is no `<Activity>`, and the tracker manages `display` too.
 
 External elements can opt out of this ownership behavior with:
 

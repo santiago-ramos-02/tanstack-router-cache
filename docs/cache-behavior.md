@@ -12,6 +12,8 @@
 
 The default `effectMode: "pause"` wraps retained content in React Activity. React preserves state and DOM while the route is hidden, cleans up its effects, and starts those effects again when the route becomes visible.
 
+A navigation only reveals. The route it leaves is hidden from the screen in the navigation's commit, and its effects are cleaned up in a task after the revealed route paints (see [Revealing and retiring](architecture.md#revealing-and-retiring)). Returning to the route before then keeps its effects mounted.
+
 `effectMode: "keep-alive"` hides the retained DOM without React Activity, so ordinary component effects remain mounted:
 
 ```tsx

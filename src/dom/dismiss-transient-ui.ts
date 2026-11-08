@@ -460,10 +460,8 @@ export function syncTransientUiRouteActivity(
     documentState.visiblePathname = null;
   }
 
-  dispatchHoverExitEvents(
-    getOwnedExternalElements(document, pathname),
-    document
-  );
+  // Only DOM writes here: this runs in the navigation's commit. Hover exits
+  // make the route's components react, so they wait for dismissTransientUi.
   hideOwnedExternalElements(document, pathname);
 }
 
