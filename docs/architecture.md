@@ -296,7 +296,11 @@ flowchart TD
   mode -- no --> hidden --> dom
 ```
 
-`OffScreen` uses React `Activity` in the default `"pause"` effect mode. In `"keep-alive"` mode it hides the retained DOM directly, leaving child effects mounted. The wrapping element gets these attributes:
+`OffScreen` uses React `Activity` in the default `"pause"` effect mode. In `"keep-alive"` mode it hides the retained DOM directly, leaving child effects mounted.
+
+A hidden route whose effects are still connected (a `"keep-alive"` route, or a paused route not yet retired) keeps its layout. Its observers stay connected, and `display: none` would hand them every element at zero size: a virtualized list that measures its rows would then render all of them, or load another page each time the route is left. The wrapping element gets `content-visibility: hidden` instead, so the browser neither lays out nor paints its contents and their sizes stay as they were, and it takes no space, with `visibility: hidden`, `inert` and `aria-hidden` keeping it out of sight and reach, also where `content-visibility` is not supported. Once a paused route is retired, its effects are disconnected and the element gets `display: none`.
+
+The wrapping element gets these attributes:
 
 ```html
 <div
@@ -315,8 +319,8 @@ Those attributes are used by diagnostics and transient UI tracking. The wrapping
 
 A navigation should cost only the route it shows. React renders hidden `Activity` content at a lower priority than visible content, but runtimes such as TanStack Redact render it synchronously, in the same pass. Hiding a large route in the navigation's commit then renders it and lays it out again, in the same task as the route being revealed. So a navigation is split in two:
 
-1. **Reveal**, in the navigation's commit: the destination's `Activity` turns visible and its effects connect. The route left gets `display: none` on its wrapping element, its external portals are hidden, and the activity context reports it hidden, so only the components that read `useRouteCacheActive`, `useRouteCacheEffect` or `useRouteCacheActivity` render. Nothing else of its subtree renders.
-2. **Retire**, in a task after the revealed route paints: the left route's transient UI is dismissed while its listeners are still connected, then its `Activity` turns hidden, which disconnects its effects.
+1. **Reveal**, in the navigation's commit: the destination's `Activity` turns visible and its effects connect. The route left is hidden with its layout kept (see above), its external portals are hidden, and the activity context reports it hidden, so only the components that read `useRouteCacheActive`, `useRouteCacheEffect` or `useRouteCacheActivity` render. Nothing else of its subtree renders.
+2. **Retire**, in a task after the revealed route paints: the left route's transient UI is dismissed while its listeners are still connected, then its `Activity` turns hidden, which disconnects its effects, and its wrapping element gets `display: none`.
 
 Routes whose mode does not change are not rendered at all: `CachedRouteView` and the boundary around each `Activity` are memoized, and their children keep their element. The revealed route itself renders only what changed while it was hidden, because its snapshot keeps the match objects whose data did not change (see [Router snapshot](#router-snapshot)). Returning to a route before it is retired cancels the retire, so its effects never disconnect.
 

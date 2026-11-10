@@ -14,6 +14,9 @@ import { RouterCacheOutlet, RouterCacheProvider } from "../../src";
 // Every render and layout effect, in order, so a test can tell what ran in
 // the navigation's commit from what ran after it.
 const timeline: string[] = [];
+// Read in the layout effect of each route that connects, so a test can see
+// the page as the commit that revealed it left it.
+let onConnect: ((routeName: string) => void) | undefined;
 
 function RootShell() {
   return (
@@ -44,6 +47,7 @@ function RoutePage({ routeName }: { routeName: string }) {
 
   useLayoutEffect(() => {
     timeline.push(`connect:${routeName}`);
+    onConnect?.(routeName);
 
     return () => {
       timeline.push(`disconnect:${routeName}`);
@@ -51,7 +55,7 @@ function RoutePage({ routeName }: { routeName: string }) {
   }, [routeName]);
 
   return (
-    <ul data-testid={`${routeName}-page`}>
+    <ul aria-label={routeName} data-testid={`${routeName}-page`}>
       {[0, 1, 2].map((index) => (
         <Row index={index} key={index} routeName={routeName} />
       ))}
@@ -169,5 +173,41 @@ describe("hidden cached route work", () => {
     expect(timeline.filter((entry) => entry.startsWith("render:"))).toEqual([]);
     expect(screen.getByTestId("datos-page")).toBeVisible();
     expect(screen.getByTestId("tramite-page")).not.toBeVisible();
+  });
+
+  it("keeps the layout of a route it leaves until its effects disconnect", async () => {
+    const router = await renderCachedRoutes();
+    const page = screen.getByTestId("tramite-page");
+    const container = page.closest<HTMLElement>(
+      "[data-router-cache-container]"
+    );
+    const atReveal: { display: string; visibility: string }[] = [];
+    onConnect = (routeName) => {
+      if (routeName === "datos") {
+        const { display, visibility } = getComputedStyle(container!);
+        atReveal.push({ display, visibility });
+      }
+    };
+    timeline.length = 0;
+    await navigateTo(router, "/datos");
+    onConnect = undefined;
+
+    // In the commit that reveals another route, the route left keeps its
+    // effects connected, so its layout must not collapse: an observer of its
+    // sizes (a virtualized list) would read every element at zero and render,
+    // or load, everything. It is out of sight and out of reach all the same.
+    expect(atReveal).toEqual([
+      { display: expect.not.stringMatching(/^none$/u), visibility: "hidden" },
+    ]);
+
+    await afterNextPaint();
+
+    // Once retired, its effects are disconnected and it leaves the layout.
+    expect(timeline.indexOf("disconnect:tramite")).toBeGreaterThan(
+      timeline.indexOf("connect:datos")
+    );
+    expect(getComputedStyle(container!).display).toBe("none");
+    expect(page).not.toBeVisible();
+    expect(screen.queryByRole("list", { name: "tramite" })).toBeNull();
   });
 });

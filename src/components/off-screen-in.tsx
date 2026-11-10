@@ -1,5 +1,5 @@
 import { Activity, memo, useLayoutEffect, useRef, useState } from "react";
-import type { ReactNode, RefObject } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 
 import { RouteCacheActivityProvider } from "../contexts/route-cache-activity";
 import {
@@ -42,6 +42,36 @@ const SCROLL_RESTORE_DELAYS = [
   LATE_SCROLL_RESTORE_DELAY,
   FINAL_SCROLL_RESTORE_DELAY,
 ] as const;
+
+/**
+ * A hidden route whose effects are still connected keeps its layout. Its
+ * observers (a virtualized list that measures its rows, a positioner) stay
+ * connected, and `display: none` would hand them every element at zero size,
+ * so a virtualized list would render, or load, everything. With
+ * `content-visibility: hidden` the browser neither lays out nor paints the
+ * contents and their sizes stay as they were. The container takes no space,
+ * and `visibility` and `inert` keep the route out of sight and reach, also
+ * where `content-visibility` is not supported.
+ */
+const HIDDEN_CONNECTED_STYLE = {
+  contentVisibility: "hidden",
+  flex: "none",
+  height: 0,
+  minHeight: 0,
+  overflow: "hidden",
+  visibility: "hidden",
+} satisfies CSSProperties;
+
+/** A hidden route whose effects are disconnected leaves the layout. */
+const HIDDEN_DISCONNECTED_STYLE = { display: "none" } satisfies CSSProperties;
+
+function containerStyle(mode: ActivityMode, isHiddenConnected: boolean) {
+  if (mode === "visible") {
+    return;
+  }
+
+  return isHiddenConnected ? HIDDEN_CONNECTED_STYLE : HIDDEN_DISCONNECTED_STYLE;
+}
 
 /**
  * Runs `callback` in a task after the next frame paints, the way React renders
@@ -109,6 +139,11 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
   }
 
   const subtreeMode = mode === "visible" ? "visible" : retainedMode;
+  // Hidden from the screen while its effects still run: a `keep-alive` route
+  // always, a paused route until it is retired.
+  const isHiddenConnected =
+    mode === "hidden" &&
+    (effectMode === "keep-alive" || subtreeMode === "visible");
 
   const attachContainerRef = (node: HTMLDivElement | null) => {
     localContainerRef.current = node;
@@ -281,17 +316,15 @@ export default function OffScreenIn(props: Readonly<OffScreenInProps>) {
 
   return (
     <div
-      aria-hidden={
-        effectMode === "keep-alive" && mode === "hidden" ? true : undefined
-      }
+      aria-hidden={isHiddenConnected ? true : undefined}
       className="flex min-h-full w-full flex-1 flex-col"
       data-router-cache-container="true"
       data-router-cache-effect-mode={effectMode}
       data-router-cache-mode={mode}
       data-router-cache-pathname={pathname}
-      inert={effectMode === "keep-alive" && mode === "hidden"}
+      inert={isHiddenConnected}
       ref={attachContainerRef}
-      style={mode === "hidden" ? { display: "none" } : undefined}
+      style={containerStyle(mode, isHiddenConnected)}
     >
       {pathname ? (
         // The activity context follows the navigation: the hooks that read it
