@@ -186,6 +186,8 @@ The snapshot owns isolated stores for the current matches, location, resolved lo
 
 When the cached entry is refreshed, the cache manager updates those snapshot stores in place. This lets route hooks read current match and search data without remounting the retained route tree. Imperative router actions still call through to the real router.
 
+The router renews every match on each navigation, even when its data is the same. The snapshot shares each new match with the one it already holds, as the router's structural sharing does: what did not change keeps its identity, and a match whose data did not change stays the same object. The load bookkeeping the router renews on every load (`abortController`, `updatedAt`, `_nonReactive`) is carried into it without publishing a change. TanStack Router's `Match` renders its route again for every new match object, and a runtime without React's bailout on an element it already rendered, such as TanStack Redact, would then render the whole route each time it is revealed. A match whose data changed, such as a new search or loader data, is published as before.
+
 `CachedOutlet` renders that snapshot like this:
 
 ```tsx
@@ -316,7 +318,7 @@ A navigation should cost only the route it shows. React renders hidden `Activity
 1. **Reveal**, in the navigation's commit: the destination's `Activity` turns visible and its effects connect. The route left gets `display: none` on its wrapping element, its external portals are hidden, and the activity context reports it hidden, so only the components that read `useRouteCacheActive`, `useRouteCacheEffect` or `useRouteCacheActivity` render. Nothing else of its subtree renders.
 2. **Retire**, in a task after the revealed route paints: the left route's transient UI is dismissed while its listeners are still connected, then its `Activity` turns hidden, which disconnects its effects.
 
-Routes whose mode does not change are not rendered at all: `CachedRouteView` and the boundary around each `Activity` are memoized, and their children keep their element. Returning to a route before it is retired cancels the retire, so its effects never disconnect.
+Routes whose mode does not change are not rendered at all: `CachedRouteView` and the boundary around each `Activity` are memoized, and their children keep their element. The revealed route itself renders only what changed while it was hidden, because its snapshot keeps the match objects whose data did not change (see [Router snapshot](#router-snapshot)). Returning to a route before it is retired cancels the retire, so its effects never disconnect.
 
 ```mermaid
 sequenceDiagram

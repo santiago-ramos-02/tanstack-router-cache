@@ -31,9 +31,10 @@ function Row({ routeName, index }: { routeName: string; index: number }) {
 
 // Floating UI and form fields register their node through a callback ref that
 // sets state, so detaching the ref when a route is hidden renders it again.
+// That is an update of its own, so it is logged apart from the other renders.
 function Anchor({ routeName }: { routeName: string }) {
   const [node, setNode] = useState<HTMLElement | null>(null);
-  timeline.push(`render:${routeName}`);
+  timeline.push(`anchor:${routeName}`);
 
   return <span ref={setNode}>{node ? "anchored" : "detached"}</span>;
 }
@@ -152,6 +153,21 @@ describe("hidden cached route work", () => {
     expect(
       notShown(timeline).filter((entry) => !entry.endsWith(":tramite"))
     ).toEqual([]);
+    expect(screen.getByTestId("tramite-page")).not.toBeVisible();
+  });
+
+  it("reveals and retires a cached route without rendering it again", async () => {
+    const router = await renderCachedRoutes();
+    timeline.length = 0;
+    await navigateTo(router, "/datos");
+    await afterNextPaint();
+
+    // Revealing reconnects the route's effects and retiring disconnects them.
+    // Neither renders a component whose props and state did not change.
+    expect(timeline).toContain("connect:datos");
+    expect(timeline).toContain("disconnect:tramite");
+    expect(timeline.filter((entry) => entry.startsWith("render:"))).toEqual([]);
+    expect(screen.getByTestId("datos-page")).toBeVisible();
     expect(screen.getByTestId("tramite-page")).not.toBeVisible();
   });
 });

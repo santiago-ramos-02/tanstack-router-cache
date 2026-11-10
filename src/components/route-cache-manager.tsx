@@ -7,6 +7,7 @@ import type {
 } from "@tanstack/react-router";
 import {
   Outlet,
+  replaceEqualDeep,
   useChildMatches,
   useMatches,
   useRouter,
@@ -143,21 +144,87 @@ function createSnapshotStore<T>(value: T) {
   };
 }
 
-function createRouterSnapshotData({
-  matches,
-  router,
-  routerLocation,
-  routerResolvedLocation,
-}: RouterSnapshotInput) {
-  const snapshotMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
+// Load bookkeeping the router renews on every navigation, even when the
+// route's data does not change.
+const MATCH_LOAD_BOOKKEEPING = new Set([
+  "_nonReactive",
+  "abortController",
+  "updatedAt",
+]);
+
+/**
+ * The match a snapshot publishes for `next`. What did not change keeps its
+ * identity, as in the router's own structural sharing, and a match whose data
+ * did not change stays the same object, carrying the latest load bookkeeping
+ * without publishing a change. TanStack Router's `Match` renders its route
+ * again for every new match object, and a runtime without React's bailout on
+ * an element it already rendered (TanStack Redact) then renders the whole
+ * route: revealing a retained route would render all of it.
+ */
+function shareSnapshotMatch(
+  previous: RouterMatch | undefined,
+  next: RouterMatch
+) {
+  if (!previous) {
+    return next;
+  }
+
+  const shared = { ...next };
+  let changed = Object.keys(previous).length !== Object.keys(next).length;
+
+  for (const key of Object.keys(next)) {
+    if (!MATCH_LOAD_BOOKKEEPING.has(key)) {
+      shared[key] = replaceEqualDeep(previous[key], next[key]);
+      changed ||= shared[key] !== previous[key];
+    }
+  }
+
+  if (changed) {
+    return shared;
+  }
+
+  for (const key of MATCH_LOAD_BOOKKEEPING) {
+    if (key in next) {
+      previous[key] = next[key];
+    }
+  }
+
+  return previous;
+}
+
+function hasSameItems<T>(previous: readonly T[], next: readonly T[]) {
+  return (
+    previous.length === next.length &&
+    previous.every((item, index) => item === next[index])
+  );
+}
+
+function createRouterSnapshotData(
+  {
+    matches,
+    router,
+    routerLocation,
+    routerResolvedLocation,
+  }: RouterSnapshotInput,
+  previousMatches: RouterMatch[] = []
+) {
+  const previousByRoute = new Map(
+    previousMatches.map((match) => [match.routeId, match])
+  );
+  const nextMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
     const nextMatch = snapshotMatch(match, routerLocation);
 
     if (isRouterMatch(nextMatch)) {
-      snapshot.push(nextMatch);
+      snapshot.push(
+        shareSnapshotMatch(previousByRoute.get(nextMatch.routeId), nextMatch)
+      );
     }
 
     return snapshot;
   }, []);
+  const snapshotMatches = hasSameItems(previousMatches, nextMatches)
+    ? previousMatches
+    : nextMatches;
 
   return {
     matches: snapshotMatches,
@@ -464,8 +531,9 @@ function createRouterSnapshot(input: RouterSnapshotInput) {
   };
 
   const updateSnapshot: RouterSnapshotUpdater = (nextInput) => {
-    const nextData = createRouterSnapshotData(nextInput);
+    const nextData = createRouterSnapshotData(nextInput, stores.matches.get());
     const nextMatches = nextData.matches;
+    const nextIds = nextMatches.map((match) => match.routeId);
     const nextRouteIds = new Set(nextMatches.map((match) => match.routeId));
 
     for (const match of nextMatches) {
@@ -491,7 +559,9 @@ function createRouterSnapshot(input: RouterSnapshotInput) {
     stores.status.set(nextInput.router.stores.status.get());
     stores.location.set(nextInput.routerLocation);
     stores.resolvedLocation.set(nextInput.routerResolvedLocation);
-    stores.ids.set(nextMatches.map((match) => match.routeId));
+    if (!hasSameItems(stores.ids.get(), nextIds)) {
+      stores.ids.set(nextIds);
+    }
     stores.matches.set(nextMatches);
     stores.__store.set(nextData.state);
   };
