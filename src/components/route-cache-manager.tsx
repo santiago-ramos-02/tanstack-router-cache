@@ -1,5 +1,3 @@
-/* oxlint-disable react/react-compiler -- This external route cache intentionally reads stable mutable refs during render to preserve cached element identity. */
-
 import type {
   ParsedLocation,
   RouterEvents,

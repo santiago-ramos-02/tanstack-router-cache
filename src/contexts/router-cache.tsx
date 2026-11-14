@@ -1,5 +1,3 @@
-/* oxlint-disable react/react-compiler -- This external route cache intentionally reads and updates stable mutable refs rather than rendering from them. */
-
 import type {
   RouterContextProvider,
   StaticDataRouteOption,
