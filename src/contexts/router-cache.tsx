@@ -79,6 +79,8 @@ export type CachedRoutes = Record<string, CachedRouteData>;
 export type RouterCacheContextState = {
   cachedRoutes: CachedRoutes;
   erroredRouteCounts: Record<string, number>;
+  /** False when `maxEntries` is 0: no visited route can be retained. */
+  retainsRoutes: boolean;
   /**
    * Applies the desired entry for a pathname, or removes it when `undefined`.
    * Prunes stale entries and applies the entry limits in the same update.
@@ -557,6 +559,7 @@ function RouterCacheProviderScope({
     () => ({
       cachedRoutes,
       erroredRouteCounts,
+      retainsRoutes: cacheConfig.maxEntries > 0,
       setCachedRoutes: updateCachedRoutes,
       deleteCachedRoutes,
       touchCachedRoutes,
@@ -564,6 +567,7 @@ function RouterCacheProviderScope({
       releaseErroredRoute,
     }),
     [
+      cacheConfig,
       cachedRoutes,
       deleteCachedRoutes,
       erroredRouteCounts,

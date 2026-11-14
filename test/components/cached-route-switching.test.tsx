@@ -120,34 +120,23 @@ describe("RouterCacheOutlet cached route switching", () => {
   it("mounts and cleans up route effects on every visibility change without duplicates", async () => {
     const router = await renderTwoRouteCacheRouter();
 
-    // Warm both cached screens first. A route's first visit hands off from
-    // the live outlet to the cached snapshot (an extra setup/cleanup pair),
-    // which is separate from the visibility lifecycle asserted below.
+    // A first visit mounts its route once, in its retained view, so the log
+    // holds only the visibility lifecycle from the first render on.
     await navigateTo(router, "/radicacion");
 
     await waitFor(() => {
-      expect(screen.getByTestId("radicacion-page")).toBeInTheDocument();
-    });
-
-    await navigateTo(router, "/consulta");
-
-    await waitFor(() => {
-      expect(screen.getByTestId("consulta-page")).toBeInTheDocument();
-      expect(effectLog.at(-1)).toBe("setup:consulta");
-    });
-
-    effectLog.length = 0;
-
-    await navigateTo(router, "/radicacion");
-
-    await waitFor(() => {
-      expect(effectLog).toEqual(["cleanup:consulta", "setup:radicacion"]);
+      expect(effectLog).toEqual([
+        "setup:consulta",
+        "cleanup:consulta",
+        "setup:radicacion",
+      ]);
     });
 
     await navigateTo(router, "/consulta");
 
     await waitFor(() => {
       expect(effectLog).toEqual([
+        "setup:consulta",
         "cleanup:consulta",
         "setup:radicacion",
         "cleanup:radicacion",
@@ -159,6 +148,7 @@ describe("RouterCacheOutlet cached route switching", () => {
 
     await waitFor(() => {
       expect(effectLog).toEqual([
+        "setup:consulta",
         "cleanup:consulta",
         "setup:radicacion",
         "cleanup:radicacion",
@@ -172,6 +162,7 @@ describe("RouterCacheOutlet cached route switching", () => {
 
     await waitFor(() => {
       expect(effectLog).toEqual([
+        "setup:consulta",
         "cleanup:consulta",
         "setup:radicacion",
         "cleanup:radicacion",

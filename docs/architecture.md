@@ -200,7 +200,7 @@ The router renews every match on each navigation, even when its data is the same
 
 On every relevant router state change, the cache manager checks the current route state and updates the cache in a single provider call: either the desired entry for the current pathname or its removal. That call prunes expired entries, writes or deletes the entry, and enforces the limits in one state update, so a navigation commits at most one cache state change.
 
-This runs as a layout effect on the render rather than from a router event for two reasons. TanStack Router publishes no event when a loader revalidates in the background and replaces the matches of the visible route, so only the render sees that change. And on a route's first visit the swap from the live outlet to the cached snapshot must commit before paint, which a state update scheduled from a router event would not guarantee.
+This runs as a layout effect on the render rather than from a router event for two reasons. TanStack Router publishes no event when a loader revalidates in the background and replaces the matches of the visible route, so only the render sees that change. And a route's first visit already renders from the snapshot it is about to store (see [Rendering model](#rendering-model)), so the entry must commit before paint, which a state update scheduled from a router event would not guarantee.
 
 ```mermaid
 flowchart TD
@@ -237,34 +237,35 @@ Cached entries with a route `maxAge` are treated as expired when their age excee
 
 The manager tracks three pathnames:
 
-| Name               | Meaning                                         |
-| ------------------ | ----------------------------------------------- |
-| `routerPathname`   | Current router location pathname.               |
-| `resolvedPathname` | Resolved router location pathname.              |
-| `visiblePathname`  | Cached pathname that should currently be shown. |
+| Name | Meaning |
+| --- | --- |
+| `routerPathname` | Current router location pathname, the destination once a navigation starts. |
+| `currentMatchPathname` | Pathname of the matches the router renders, which change once the destination resolves. |
+| `visiblePathname` | Pathname whose view is on screen. |
 
 ```mermaid
 flowchart TD
-  routerPathname["routerPathname"]
-  resolvedPathname["resolvedPathname"]
+  resolved{"Destination resolved?"}
   readyDestination{"Destination is ready cached route?"}
-  ancestor{"Router pathname is ancestor?"}
+  readyLeaving{"Route being left is ready cached route?"}
   useRouter["visiblePathname = routerPathname"]
-  useResolved["visiblePathname = resolvedPathname"]
+  useLeaving["visiblePathname = currentMatchPathname"]
 
-  routerPathname --> readyDestination
-  resolvedPathname --> readyDestination
+  resolved -- yes --> useRouter
+  resolved -- no --> readyDestination
   readyDestination -- yes --> useRouter
-  readyDestination -- no --> ancestor
-  ancestor -- yes --> useRouter
-  ancestor -- no --> useResolved
+  readyDestination -- no --> readyLeaving
+  readyLeaving -- yes --> useLeaving
+  readyLeaving -- no --> useRouter
 ```
 
-Most of the time, `visiblePathname` is the resolved pathname. During some navigations, TanStack Router can temporarily expose a router pathname that differs from the resolved pathname. If the destination is already cached, the package can show it immediately.
+A ready cached destination is shown as soon as the navigation starts. Otherwise the router keeps rendering the route being left until the destination resolves, so a retained route being left stays visible until then. Hiding it at once would leave only the live outlet, and the router would mount a second copy of the route being left in it.
 
 ## Rendering model
 
 Every ready cached entry is rendered through `CachedRouteView`, a memo boundary around `OffScreen` that keeps its `CachedOutlet` element across renders.
+
+A route mounts once, on its first visit. When the destination resolves with `routeCache` enabled and has no entry yet, the manager creates its snapshot during that render and renders it through a `CachedRouteView` in the same keyed list as the retained views. The cache then stores that same snapshot, so the entry takes the first visit's place without remounting it. A route still loading (with a pending component) or not cached renders in the live outlet, keyed by the pathname of the matches the router renders, so a route being left keeps its outlet until the destination resolves. With `maxEntries` set to `0` nothing is retained and every visit renders in the live outlet.
 
 ```tsx
 <CachedRouteView

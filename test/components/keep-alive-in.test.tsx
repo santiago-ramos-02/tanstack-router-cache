@@ -276,7 +276,9 @@ describe("RouteCacheManager", () => {
     expect(screen.queryByTestId("offscreen-/consulta")).not.toBeInTheDocument();
   });
 
-  it("renders the live outlet while a non-cached destination is loading from a cached route", () => {
+  // The router still renders /consulta until the destination resolves, so a
+  // live outlet here would mount a second copy of it.
+  it("keeps the cached route being left on screen while the destination loads", () => {
     routerCacheContext.cachedRoutes = {
       "/consulta": {
         href: "/consulta",
@@ -308,9 +310,9 @@ describe("RouteCacheManager", () => {
 
     expect(screen.getByTestId("offscreen-/consulta")).toHaveAttribute(
       "data-mode",
-      "hidden"
+      "visible"
     );
-    expect(screen.getByTestId("live-outlet")).toBeInTheDocument();
+    expect(screen.queryByTestId("live-outlet")).not.toBeInTheDocument();
   });
 
   it("shows the destination immediately when navigating to a ready cached route", () => {

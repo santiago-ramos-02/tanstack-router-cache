@@ -14,7 +14,13 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import type { ComponentProps } from "react";
-import { useEffect, useEffectEvent, useLayoutEffect, useRef } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 import { useRouterCacheContext } from "../contexts/router-cache";
 import { useEventListener } from "../hooks/use-event-listener";
@@ -25,7 +31,7 @@ import {
   isCachedRouteStale,
   isRouteCacheEnabled,
 } from "../route-cache-static-data";
-import type { ActivityMode } from "../types";
+import type { ActivityMode, RouteCacheEffectMode } from "../types";
 import type CachedOutlet from "./cached-outlet";
 import CachedRouteView from "./cached-route-view";
 import { shouldRestoreCachedHref } from "./restore-cached-href";
@@ -66,6 +72,14 @@ type ReadyCachedRoute = ReturnType<
 type PendingCachedNavigation = {
   pathname: string;
   startedAt: number;
+};
+type FirstVisit = {
+  effectMode: RouteCacheEffectMode;
+  pathname: string;
+  rootRouteId: string;
+};
+type EnteringRoute = FirstVisit & {
+  routerSnapshot: NonNullable<RouterSnapshot>;
 };
 
 function isRouterMatchValue(value: unknown): value is RouterMatch {
@@ -372,6 +386,7 @@ function isCurrentUnmanagedCachedRoute(
 }
 
 function syncReadyCachedRoute({
+  enteringSnapshot,
   rootRouteId,
   matches,
   routeId,
@@ -384,6 +399,7 @@ function syncReadyCachedRoute({
   setCachedRoutes,
   staticData,
 }: {
+  enteringSnapshot?: RouterSnapshot;
   rootRouteId?: string;
   matches: (RouterMatch | undefined)[];
   routeId?: string;
@@ -402,7 +418,11 @@ function syncReadyCachedRoute({
     routerLocation,
     routerResolvedLocation,
   };
-  let routerSnapshot = rootRouteId ? route?.routerSnapshot : undefined;
+  // A first visit already renders in its retained view; storing that view's
+  // snapshot keeps it mounted.
+  let routerSnapshot = rootRouteId
+    ? (route?.routerSnapshot ?? enteringSnapshot)
+    : undefined;
 
   if (
     routerSnapshot &&
@@ -430,6 +450,7 @@ function syncReadyCachedRoute({
 }
 
 function syncCachedRouteState({
+  enteringSnapshot,
   isCurrentMatchReady,
   isCurrentMatchResolved,
   isCurrentRouteErrored,
@@ -445,6 +466,7 @@ function syncCachedRouteState({
   setCachedRoutes,
   staticData,
 }: {
+  enteringSnapshot?: RouterSnapshot;
   isCurrentMatchReady: boolean;
   isCurrentMatchResolved: boolean;
   isCurrentRouteErrored: boolean;
@@ -478,6 +500,7 @@ function syncCachedRouteState({
     }
 
     syncReadyCachedRoute({
+      enteringSnapshot,
       rootRouteId,
       matches,
       routeId,
@@ -646,6 +669,171 @@ function renderCachedRoute({
   );
 }
 
+/**
+ * The pathname whose view is on screen. The location changes as soon as a
+ * navigation starts, but the router keeps rendering the route being left until
+ * the destination resolves. A retained route being left stays visible until
+ * then, so nothing mounts in its place: a live outlet would mount a second copy
+ * of it.
+ */
+function getVisiblePathname({
+  cachedRoutes,
+  currentMatchPathname,
+  destinationRoute,
+  isCurrentMatchResolved,
+  routerPathname,
+}: {
+  cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"];
+  currentMatchPathname?: string;
+  destinationRoute?: ReadyCachedRoute;
+  isCurrentMatchResolved: boolean;
+  routerPathname: string;
+}) {
+  if (
+    isCurrentMatchResolved ||
+    currentMatchPathname === undefined ||
+    isReadyCachedRoute(destinationRoute) ||
+    !isReadyCachedRoute(cachedRoutes[currentMatchPathname])
+  ) {
+    return routerPathname;
+  }
+
+  return currentMatchPathname;
+}
+
+/**
+ * The route of a first visit, once it is ready to render: cache enabled,
+ * resolved without errors, and with no entry yet. Nothing is a first visit
+ * when the cache retains no route.
+ */
+function getFirstVisit({
+  destinationRoute,
+  isCurrentMatchReady,
+  isCurrentRouteErrored,
+  retainsRoutes,
+  rootRouteId,
+  routerPathname,
+  staticData,
+}: {
+  destinationRoute?: ReadyCachedRoute;
+  isCurrentMatchReady: boolean;
+  isCurrentRouteErrored: boolean;
+  retainsRoutes: boolean;
+  rootRouteId?: string;
+  routerPathname: string;
+  staticData?: StaticDataRouteOption;
+}): FirstVisit | undefined {
+  if (
+    !retainsRoutes ||
+    isCurrentRouteErrored ||
+    !isCurrentMatchReady ||
+    rootRouteId === undefined ||
+    staticData === undefined ||
+    destinationRoute !== undefined
+  ) {
+    return;
+  }
+
+  return {
+    effectMode: getRouteCacheEffectMode(staticData),
+    pathname: routerPathname,
+    rootRouteId,
+  };
+}
+
+/**
+ * A first visit renders in a retained view from its first render, with the
+ * snapshot the cache then stores, so storing it remounts nothing. Rendering it
+ * in the live outlet first would mount it again in its retained view. The
+ * snapshot is created once per visit and kept in state, updated while
+ * rendering when the visit changes.
+ */
+function useEnteringRoute(
+  firstVisit: FirstVisit | undefined,
+  snapshotInput: RouterSnapshotInput
+) {
+  const [enteringRoute, setEnteringRoute] = useState<EnteringRoute | null>(
+    null
+  );
+
+  if (!firstVisit) {
+    if (enteringRoute !== null) {
+      setEnteringRoute(null);
+    }
+
+    return null;
+  }
+
+  if (
+    enteringRoute?.pathname === firstVisit.pathname &&
+    enteringRoute.rootRouteId === firstVisit.rootRouteId
+  ) {
+    return enteringRoute;
+  }
+
+  const nextEnteringRoute = {
+    ...firstVisit,
+    routerSnapshot: createRouterSnapshot(snapshotInput),
+  };
+
+  setEnteringRoute(nextEnteringRoute);
+  return nextEnteringRoute;
+}
+
+/**
+ * Retained views and the first visit share one keyed list, so the entry the
+ * cache stores takes the first visit's place without a remount. The live
+ * outlet is keyed by the route the router renders in it, so a route being left
+ * keeps its outlet until the destination resolves.
+ */
+function renderRouteViews({
+  bypassCachedPathname,
+  cachedRoutes,
+  enteringRoute,
+  livePathname,
+  visiblePathname,
+}: {
+  bypassCachedPathname?: string;
+  cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"];
+  enteringRoute: EnteringRoute | null;
+  livePathname: string;
+  visiblePathname: string;
+}) {
+  const views = Object.entries(cachedRoutes).map(([pathname, route]) =>
+    renderCachedRoute({
+      bypassCachedPathname,
+      pathname,
+      route,
+      routerPathname: visiblePathname,
+    })
+  );
+
+  if (enteringRoute) {
+    views.push(
+      <CachedRouteView
+        effectMode={enteringRoute.effectMode}
+        key={enteringRoute.pathname}
+        mode="visible"
+        pathname={enteringRoute.pathname}
+        rootRouteId={enteringRoute.rootRouteId}
+        routerSnapshot={enteringRoute.routerSnapshot}
+      />
+    );
+  }
+
+  const shouldRenderLiveOutlet =
+    enteringRoute === null &&
+    (visiblePathname === bypassCachedPathname ||
+      !isReadyCachedRoute(cachedRoutes[visiblePathname]));
+
+  return (
+    <>
+      {views}
+      {shouldRenderLiveOutlet ? <Outlet key={`live-${livePathname}`} /> : null}
+    </>
+  );
+}
+
 function buildRouteCacheModes(
   cachedRoutes: ReturnType<typeof useRouterCacheContext>["cachedRoutes"],
   routerPathname: string
@@ -705,6 +893,7 @@ function RouteCacheManager() {
   const {
     cachedRoutes,
     erroredRouteCounts,
+    retainsRoutes,
     setCachedRoutes,
     touchCachedRoutes,
   } = useRouterCacheContext();
@@ -766,11 +955,33 @@ function RouteCacheManager() {
   const bypassCachedPathname = isCurrentRouteErrored
     ? routerPathname
     : undefined;
+  const visiblePathname = getVisiblePathname({
+    cachedRoutes,
+    currentMatchPathname,
+    destinationRoute,
+    isCurrentMatchResolved,
+    routerPathname,
+  });
+
+  const enteringRoute = useEnteringRoute(
+    getFirstVisit({
+      destinationRoute,
+      isCurrentMatchReady,
+      isCurrentRouteErrored,
+      retainsRoutes,
+      rootRouteId,
+      routerPathname,
+      staticData,
+    }),
+    { matches, router, routerLocation, routerResolvedLocation }
+  );
+  const enteringSnapshot = enteringRoute?.routerSnapshot;
   // TanStack Router has no event for matches the loader republishes in the
   // background, so this follows the render. It is a layout effect so a first
-  // visit swaps from the live outlet to its cached snapshot before paint.
+  // visit is stored before paint.
   useLayoutEffect(() => {
     syncCachedRouteState({
+      enteringSnapshot,
       isCurrentMatchReady,
       isCurrentMatchResolved,
       isCurrentRouteErrored,
@@ -788,6 +999,7 @@ function RouteCacheManager() {
     });
   }, [
     currentCachedRoute,
+    enteringSnapshot,
     isCurrentRouteErrored,
     isCurrentMatchReady,
     isCurrentMatchResolved,
@@ -840,9 +1052,9 @@ function RouteCacheManager() {
       cachedRoutes,
       eventListener,
       previousRouteCacheModes: previousRouteCacheModesRef.current,
-      routerPathname,
+      routerPathname: visiblePathname,
     });
-  }, [cachedRoutes, eventListener, routerPathname]);
+  }, [cachedRoutes, eventListener, visiblePathname]);
 
   useEffect(() => {
     const pendingNavigation = pendingCachedNavigationRef.current;
@@ -931,27 +1143,15 @@ function RouteCacheManager() {
     previousPathnameRef.current = routerPathname;
   }, [routerPathname, previousPathnameRef]);
 
-  const shouldRenderLiveOutlet =
-    routerPathname === bypassCachedPathname ||
-    !isReadyCachedRoute(destinationRoute);
-
   useRouterCacheDebug(cachedRoutes, routerPathname);
 
-  return (
-    <>
-      {Object.entries(cachedRoutes).map(([pathname, route]) =>
-        renderCachedRoute({
-          bypassCachedPathname,
-          pathname,
-          route,
-          routerPathname,
-        })
-      )}
-      {shouldRenderLiveOutlet ? (
-        <Outlet key={`live-${routerPathname}`} />
-      ) : null}
-    </>
-  );
+  return renderRouteViews({
+    bypassCachedPathname,
+    cachedRoutes,
+    enteringRoute,
+    livePathname: currentMatchPathname ?? routerPathname,
+    visiblePathname,
+  });
 }
 
 export default RouteCacheManager;

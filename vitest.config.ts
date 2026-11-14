@@ -54,6 +54,7 @@ const redactProject = {
     include: [
       "test/components/hidden-route-work.test.tsx",
       "test/components/off-screen.test.tsx",
+      "test/components/single-mount.test.tsx",
     ],
     name: "redact",
     server: {
