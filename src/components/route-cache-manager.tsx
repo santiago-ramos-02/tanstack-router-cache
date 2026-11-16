@@ -170,8 +170,8 @@ const MATCH_LOAD_BOOKKEEPING = new Set([
  * did not change stays the same object, carrying the latest load bookkeeping
  * without publishing a change. TanStack Router's `Match` renders its route
  * again for every new match object, and a runtime without React's bailout on
- * an element it already rendered (TanStack Redact) then renders the whole
- * route: revealing a retained route would render all of it.
+ * an element it already rendered (TanStack Redact up to 0.3.1) then renders
+ * the whole route: revealing a retained route would render all of it.
  */
 function shareSnapshotMatch(
   previous: RouterMatch | undefined,
