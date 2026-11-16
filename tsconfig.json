@@ -7,6 +7,7 @@
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ES2023"],
     "strict": true,
+    "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     // The build emits these declarations with tsrs: bun check does not emit, and
     // rolldown's isolated declarations need explicit return types on every export.

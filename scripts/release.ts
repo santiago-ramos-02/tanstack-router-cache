@@ -14,7 +14,7 @@ const publishRunLookupIntervalMs = 5000;
 const npmVersionLookupAttempts = 24;
 const npmVersionLookupIntervalMs = 5000;
 const sharedBufferBytes = 4;
-const requestedVersion: string | undefined = process.argv[2];
+const requestedVersion = process.argv[2];
 
 type Version = [major: number, minor: number, patch: number];
 type PackageJson = Record<string, unknown> & { name: string; version: string };

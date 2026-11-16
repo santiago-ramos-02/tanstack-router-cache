@@ -23,7 +23,7 @@ if (!isManifest(packageJson)) {
 }
 
 const expectedTag = `v${packageJson.version}`;
-const actualTag: string | undefined = process.argv[2];
+const actualTag = process.argv[2];
 
 if (actualTag !== expectedTag) {
   console.error(

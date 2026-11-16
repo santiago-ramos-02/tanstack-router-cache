@@ -20,6 +20,7 @@ import {
   useState,
 } from "react";
 
+import type { CachedRouteData } from "../contexts/router-cache";
 import { useRouterCacheContext } from "../contexts/router-cache";
 import { useEventListener } from "../hooks/use-event-listener";
 import { useRouterCacheDebug } from "../hooks/use-router-cache-debug";
@@ -371,7 +372,7 @@ function snapshotMatch(
 }
 
 function isCurrentUnmanagedCachedRoute(
-  route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string],
+  route: CachedRouteData | undefined,
   routerHref?: string
 ) {
   return Boolean(
@@ -401,7 +402,7 @@ function syncReadyCachedRoute({
   rootRouteId?: string;
   matches: (RouterMatch | undefined)[];
   routeId?: string;
-  route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
+  route: CachedRouteData | undefined;
   routerLocation: ParsedLocation;
   router: ReturnType<typeof useRouter>;
   routerResolvedLocation?: ParsedLocation;
@@ -471,7 +472,7 @@ function syncCachedRouteState({
   rootRouteId?: string;
   matches: (RouterMatch | undefined)[];
   routeId?: string;
-  route: ReturnType<typeof useRouterCacheContext>["cachedRoutes"][string];
+  route: CachedRouteData | undefined;
   routerLocation: ParsedLocation;
   router: ReturnType<typeof useRouter>;
   routerResolvedLocation?: ParsedLocation;
