@@ -4,6 +4,7 @@ import {
   createRoute,
   createRouter,
   RouterProvider,
+  stripSearchParams,
 } from "@tanstack/react-router";
 import {
   act,
@@ -69,13 +70,37 @@ const searchRoute = createRoute({
   component: SearchPage,
 });
 
+function StrippedPage() {
+  const search = strippedRoute.useSearch();
+
+  return <output data-testid="stripped-page">{search.page}</output>;
+}
+
+// The default is stripped from the URL, so only the match holds it.
+const strippedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/stripped",
+  search: { middlewares: [stripSearchParams({ page: "1" })] },
+  staticData: {
+    routeCache: true,
+  },
+  validateSearch: (search: Record<string, unknown>) => ({
+    page: readSearchPage(search.page),
+  }),
+  component: StrippedPage,
+});
+
 const otherRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/other",
   component: OtherPage,
 });
 
-const routeTree = rootRoute.addChildren([searchRoute, otherRoute]);
+const routeTree = rootRoute.addChildren([
+  searchRoute,
+  strippedRoute,
+  otherRoute,
+]);
 
 async function renderSearchCacheRouter(initialPath = "/search?page=1") {
   const router = createRouter({
@@ -116,6 +141,23 @@ describe("RouterCacheOutlet search params", () => {
       expect(screen.getByTestId("search-page")).toHaveTextContent("2");
     });
     expect(screen.getByTestId("search-count")).toHaveTextContent("1");
+  });
+
+  it("hands a cached route the validated search the URL leaves out", async () => {
+    const router = await renderSearchCacheRouter("/stripped");
+
+    await waitFor(() => {
+      expect(screen.getByTestId("stripped-page")).toHaveTextContent("1");
+    });
+
+    await act(async () => {
+      await router.navigate({ to: "/other" });
+    });
+
+    // Hidden, the route renders from its snapshot. The URL has no page: the
+    // validator's default lives only in the match, which is what the loader got.
+    expect(router.state.location.search).toEqual({});
+    expect(screen.getByTestId("stripped-page")).toHaveTextContent("1");
   });
 
   it("updates useSearch values when returning to a cached route with new search params", async () => {

@@ -225,7 +225,7 @@ function createRouterSnapshotData(
     previousMatches.map((match) => [match.routeId, match])
   );
   const nextMatches = matches.reduce<RouterMatch[]>((snapshot, match) => {
-    const nextMatch = snapshotMatch(match, routerLocation);
+    const nextMatch = snapshotMatch(match);
 
     if (isRouterMatch(nextMatch)) {
       snapshot.push(
@@ -344,27 +344,18 @@ function isRouterMatch(match: RouterMatch | undefined): match is RouterMatch {
   return Boolean(match?.id && match.routeId);
 }
 
+// The match already holds the search its validator returned, which is what its
+// loader received. The location's search is the URL's, without what a
+// validator defaults or a middleware strips from it.
 function snapshotMatch(
-  match: RouterMatch | undefined,
-  routerLocation: ParsedLocation
+  match: RouterMatch | undefined
 ): RouterMatch | undefined {
   if (!isRouterMatch(match)) {
     return;
   }
 
-  const isLocationMatch = match.pathname
-    ? normalizeCachedRoutePathname(match.pathname) ===
-      normalizeCachedRoutePathname(routerLocation.pathname)
-    : false;
-
   return {
     ...match,
-    ...(isLocationMatch
-      ? {
-          _strictSearch: routerLocation.search,
-          search: routerLocation.search,
-        }
-      : {}),
     _nonReactive: {
       ...match._nonReactive,
     },
