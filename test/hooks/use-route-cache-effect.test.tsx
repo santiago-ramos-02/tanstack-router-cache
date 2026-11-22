@@ -18,11 +18,12 @@ const cleanupCalls: string[] = [];
 
 let initialMode: ActivityMode = "visible";
 
-const controls: {
+type ControlsShape = {
   setDep: ((dep: string) => void) | null;
   setLabel: ((label: string) => void) | null;
   setMode: ((mode: ActivityMode) => void) | null;
-} = {
+};
+const controls: ControlsShape = {
   setDep: null,
   setLabel: null,
   setMode: null,

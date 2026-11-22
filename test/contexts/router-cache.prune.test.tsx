@@ -14,10 +14,11 @@ import type {
 const START = 1_000_000;
 const MAX_AGE = 1000;
 
-const probe: {
+type ProbeShape = {
   context: RouterCacheContextState | null;
   renders: number;
-} = { context: null, renders: 0 };
+};
+const probe: ProbeShape = { context: null, renders: 0 };
 
 function ContextProbe() {
   probe.context = useRouterCacheContext();

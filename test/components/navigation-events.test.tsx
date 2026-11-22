@@ -42,7 +42,7 @@ const probe = {
   commits: 0,
   feedDeferred: null as Deferred | null,
   feedLoads: 0,
-  liveRouter: null as unknown,
+  liveRouter: null as ReturnType<typeof useRouter> | null,
   searchLoaderPages: [] as (number | undefined)[],
 };
 
